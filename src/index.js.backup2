@@ -1,0 +1,21 @@
+﻿require('dotenv').config();
+const app = require('./app');
+const { testConnection } = require('./config/database');
+const { connectRedis } = require('./config/redis');
+
+const PORT = process.env.PORT;
+
+async function start() {
+    await testConnection();
+    await connectRedis();
+    
+    app.listen(PORT, () => {
+        console.log(`\n🚀 Modern API Gateway on http://localhost:${PORT}`);
+        console.log(`📊 Health: http://localhost:${PORT}/health`);
+        console.log(`📈 Metrics: http://localhost:${PORT}/metrics`);
+        console.log(`🔐 Admin: admin@gateway.com / admin123`);
+        console.log(`\n✅ Modular structure loaded!\n`);
+    });
+}
+
+start();

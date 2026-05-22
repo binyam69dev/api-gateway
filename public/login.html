@@ -1,0 +1,502 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | API Gateway</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1%, transparent 1%);
+            background-size: 50px 50px;
+            animation: moveBackground 20s linear infinite;
+            opacity: 0.3;
+        }
+
+        @keyframes moveBackground {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 32px;
+            width: 100%;
+            max-width: 480px;
+            padding: 48px 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 28px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            background: #f1f5f9;
+            padding: 5px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 12px;
+            font-weight: 600;
+            background: none;
+            border: none;
+            color: #64748b;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: white;
+            color: #4f46e5;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #1e293b;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #4338ca;
+            transform: translateY(-2px);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 28px 0;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: calc(50% - 56px);
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider::before {
+            left: 0;
+        }
+
+        .divider::after {
+            right: 0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 14px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .social-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 500;
+            border: 1.5px solid #e2e8f0;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .social-btn i {
+            font-size: 20px;
+        }
+
+        .social-btn.google:hover {
+            background: #db4437;
+            color: white;
+            border-color: #db4437;
+        }
+
+        .social-btn.github:hover {
+            background: #24292f;
+            color: white;
+            border-color: #24292f;
+        }
+
+        .social-btn.facebook:hover {
+            background: #1877f2;
+            color: white;
+            border-color: #1877f2;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            display: block;
+        }
+
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            display: block;
+        }
+
+        .demo-info {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 14px;
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #4f46e5;
+            text-decoration: none;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 32px 24px;
+            }
+            h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo" onclick="window.location.href='/'">AG</div>
+        <h1>Welcome Back</h1>
+        <p class="subtitle">Sign in to your account</p>
+
+        <div id="message" class="message"></div>
+
+        <div class="tabs">
+            <button class="tab active" id="loginTab" onclick="showTab('login')">Sign In</button>
+            <button class="tab" id="registerTab" onclick="showTab('register')">Create Account</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginForm">
+            <div class="form-group">
+                <label>Email address</label>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="loginEmail" placeholder="admin@gateway.com">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="loginPassword" placeholder="Enter your password">
+                </div>
+            </div>
+            <button onclick="emailLogin()">Sign In</button>
+        </div>
+
+        <!-- Register Form -->
+        <div id="registerForm" style="display: none;">
+            <div class="form-group">
+                <label>Full name</label>
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="regName" placeholder="John Doe">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Email address</label>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="regEmail" placeholder="name@company.com">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <div class="input-group">
+                    <i class="fas fa-key"></i>
+                    <input type="password" id="regPassword" placeholder="Create a password">
+                </div>
+            </div>
+            <button onclick="register()">Create Account</button>
+        </div>
+
+        <div class="divider"><span>or continue with</span></div>
+
+        <div class="social-buttons">
+            <button class="social-btn google" id="googleBtn">
+                <i class="fab fa-google"></i> Continue with Google
+            </button>
+            <button class="social-btn github" id="githubBtn">
+                <i class="fab fa-github"></i> Continue with GitHub
+            </button>
+            <button class="social-btn facebook" id="facebookBtn">
+                <i class="fab fa-facebook-f"></i> Continue with Facebook
+            </button>
+        </div>
+
+        <div class="demo-info">
+            <strong>Demo Account</strong><br>
+            Email: admin@gateway.com<br>
+            Password: admin123
+        </div>
+
+        <div class="back-link">
+            <a onclick="window.location.href='/'">← Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        function showMessage(msg, type) {
+            const el = document.getElementById('message');
+            el.textContent = msg;
+            el.className = `message ${type}`;
+            setTimeout(() => {
+                el.className = 'message';
+            }, 5000);
+        }
+
+        function showTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+
+            if (tab === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                registerTab.classList.add('active');
+                loginTab.classList.remove('active');
+            }
+        }
+
+        async function emailLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                showMessage('Please enter email and password', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                    window.location.href = '/admin.html';
+                } else {
+                    showMessage(data.error || 'Invalid credentials', 'error');
+                }
+            } catch (err) {
+                showMessage('Connection error', 'error');
+            }
+        }
+
+        async function register() {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            if (!email || !password) {
+                showMessage('Please fill all fields', 'error');
+                return;
+            }
+
+            if (password.length < 8) {
+                showMessage('Password must be at least 8 characters', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    showMessage('Account created! Please login.', 'success');
+                    showTab('login');
+                    document.getElementById('loginEmail').value = email;
+                } else {
+                    showMessage(data.error || 'Registration failed', 'error');
+                }
+            } catch (err) {
+                showMessage('Connection error', 'error');
+            }
+        }
+
+        function socialLogin(provider) {
+            // Redirect to OAuth endpoint
+            window.location.href = `${API_URL}/auth/social/url/${provider}`;
+        }
+
+        // Event listeners
+        document.getElementById('googleBtn').onclick = () => socialLogin('google');
+        document.getElementById('githubBtn').onclick = () => socialLogin('github');
+        document.getElementById('facebookBtn').onclick = () => socialLogin('facebook');
+
+        // Check URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('register') === 'true') {
+            showTab('register');
+        }
+
+        // Check if already logged in
+        if (localStorage.getItem('token')) {
+            window.location.href = '/admin.html';
+        }
+    </script>
+</body>
+</html>

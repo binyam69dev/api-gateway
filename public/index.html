@@ -1,0 +1,599 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Gateway | Enterprise API Management Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #ffffff;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 16px 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #1e293b;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #4f46e5;
+        }
+
+        .btn-outline {
+            padding: 8px 20px;
+            border: 2px solid #4f46e5;
+            background: transparent;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #4f46e5;
+            transition: all 0.2s;
+        }
+
+        .btn-outline:hover {
+            background: #4f46e5;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            padding: 8px 24px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #4338ca;
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 120px 32px 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-title {
+            font-size: 56px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #ffffff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn-white {
+            padding: 14px 32px;
+            background: white;
+            color: #4f46e5;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-white:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-transparent {
+            padding: 14px 32px;
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-transparent:hover {
+            background: white;
+            color: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 40px;
+            margin-top: 48px;
+        }
+
+        .stat-item .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+        }
+
+        .stat-item .stat-label {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .hero-image {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 32px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .hero-image i {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 32px;
+            background: #f8fafc;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 60px;
+        }
+
+        .section-header h2 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-header p {
+            color: #64748b;
+            font-size: 18px;
+        }
+
+        .features-grid {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 40px 32px;
+            border-radius: 24px;
+            transition: all 0.3s;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 32px;
+            color: white;
+        }
+
+        .feature-card h3 {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 100px 32px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .cta p {
+            font-size: 18px;
+            margin-bottom: 32px;
+            opacity: 0.9;
+        }
+
+        .btn-cta {
+            padding: 16px 40px;
+            background: white;
+            color: #4f46e5;
+            border: none;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Footer */
+        .footer {
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 60px 32px 24px;
+        }
+
+        .footer-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 48px;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .footer-logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .footer-logo span {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .footer-description {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #94a3b8;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 16px;
+        }
+
+        .footer-social a {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            transition: all 0.3s;
+        }
+
+        .footer-social a:hover {
+            background: #4f46e5;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .footer-section h4 {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-section ul li a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .footer-section ul li a:hover {
+            color: #4f46e5;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 24px;
+            border-top: 1px solid #1e293b;
+            font-size: 14px;
+        }
+
+        .footer-bottom strong {
+            color: #4f46e5;
+        }
+
+        @media (max-width: 768px) {
+            .hero-container {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .hero-title {
+                font-size: 36px;
+            }
+            .hero-buttons {
+                justify-content: center;
+            }
+            .hero-stats {
+                justify-content: center;
+            }
+            .features-grid {
+                grid-template-columns: 1fr;
+                padding: 0 20px;
+            }
+            .nav-links {
+                display: none;
+            }
+            .section-header h2 {
+                font-size: 32px;
+            }
+            .cta h2 {
+                font-size: 32px;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 32px;
+                text-align: center;
+            }
+            .footer-logo {
+                justify-content: center;
+            }
+            .footer-social {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo" onclick="window.location.href='/'">
+                <div class="logo-icon">AG</div>
+                <span>API Gateway</span>
+            </div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#docs">Documentation</a>
+                <button class="btn-outline" id="signinBtn">Sign In</button>
+                <button class="btn-primary" id="getstartedBtn">Get Started</button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-container">
+            <div>
+                <h1 class="hero-title">Enterprise API Gateway Built for Scale</h1>
+                <p class="hero-subtitle">Secure, fast, and reliable API management. Handle authentication, rate limiting, caching, and routing in one powerful platform.</p>
+                <div class="hero-buttons">
+                    <button class="btn-white" id="heroGetStartedBtn">Get Started Free</button>
+                    <button class="btn-transparent" id="heroSigninBtn">Sign In</button>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item"><div class="stat-value">99.99%</div><div class="stat-label">Uptime SLA</div></div>
+                    <div class="stat-item"><div class="stat-value">&lt;50ms</div><div class="stat-label">Response Time</div></div>
+                    <div class="stat-item"><div class="stat-value">10K+</div><div class="stat-label">Requests/sec</div></div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <i class="fas fa-chart-line"></i>
+                <h3 style="margin-bottom: 10px;">Real-time Analytics</h3>
+                <p>Monitor your API traffic, latency, and errors in real-time</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="section-header">
+            <h2>Everything you need to manage your APIs</h2>
+            <p>Powerful features to secure, scale, and monitor your microservices</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-lock"></i></div><h3>JWT Authentication</h3><p>Secure your APIs with JWT authentication and role-based access control.</p></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-tachometer-alt"></i></div><h3>Rate Limiting</h3><p>Protect your services from abuse with configurable rate limiting per user or IP.</p></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-database"></i></div><h3>Redis Caching</h3><p>Reduce latency and database load with intelligent response caching.</p></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-route"></i></div><h3>Dynamic Routing</h3><p>Add or update routes instantly without restarting your gateway.</p></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fas fa-chart-bar"></i></div><h3>Analytics Dashboard</h3><p>Gain insights into API usage, performance metrics, and error rates.</p></div>
+            <div class="feature-card"><div class="feature-icon"><i class="fab fa-google"></i></div><h3>Social Login</h3><p>Allow users to sign in with Google, GitHub, or Facebook.</p></div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <h2>Ready to get started?</h2>
+        <p>Join thousands of developers using API Gateway</p>
+        <button class="btn-cta" id="ctaGetStartedBtn">Start Free Trial</button>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <div class="footer-logo-icon">AG</div>
+                        <span>API Gateway</span>
+                    </div>
+                    <p class="footer-description">Enterprise-grade API management platform built for scale, security, and performance.</p>
+                    <div class="footer-social">
+                        <a href="#"><i class="fab fa-github"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#">Pricing</a></li>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">API Reference</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Security</a></li>
+                        <li><a href="#">GDPR</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 API Gateway. Built by <strong>Binyam Yohannes</strong> | Full Stack Developer</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('signinBtn').onclick = () => window.location.href = '/login.html';
+        document.getElementById('getstartedBtn').onclick = () => window.location.href = '/login.html?register=true';
+        document.getElementById('heroGetStartedBtn').onclick = () => window.location.href = '/login.html?register=true';
+        document.getElementById('heroSigninBtn').onclick = () => window.location.href = '/login.html';
+        document.getElementById('ctaGetStartedBtn').onclick = () => window.location.href = '/login.html?register=true';
+    </script>
+</body>
+</html>
