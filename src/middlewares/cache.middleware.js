@@ -1,29 +1,86 @@
-﻿const { redisClient } = require('../config/redis');
+﻿const { redis } = require('../config/redis');
 
+/**
+ * Redis Caching Middleware
+ * Caches GET requests for specified TTL (Time To Live)
+ * 
+ * @param {number} ttlSeconds - Cache duration in seconds (default: 60)
+ * @returns {Function} Express middleware
+ */
 function cache(ttlSeconds = 60) {
     return async (req, res, next) => {
-        if (req.method !== 'GET') return next();
+        // Only cache GET requests
+        if (req.method !== 'GET') {
+            return next();
+        }
         
+        // Create unique cache key based on URL
         const cacheKey = `cache:${req.originalUrl || req.url}`;
         
         try {
-            const cached = await redisClient.get(cacheKey);
-            if (cached) {
+            // Try to get cached data
+            const cachedData = await redis.get(cacheKey);
+            
+            if (cachedData) {
+                // Cache HIT - return cached response
                 res.setHeader('X-Cache', 'HIT');
-                return res.json(JSON.parse(cached));
+                res.setHeader('X-Cache-TTL', ttlSeconds);
+                return res.json(JSON.parse(cachedData));
             }
             
-            const originalJson = res.json;
+            // Cache MISS - store original res.json function
+            const originalJson = res.json.bind(res);
+            
+            // Override res.json to cache the response
             res.json = function(data) {
-                redisClient.set(cacheKey, JSON.stringify(data), { EX: ttlSeconds });
+                // Store in Redis with expiration
+                redis.set(cacheKey, JSON.stringify(data), 'EX', ttlSeconds)
+                    .catch(err => console.error('Redis cache set error:', err));
+                
+                // Set cache headers
                 res.setHeader('X-Cache', 'MISS');
-                originalJson.call(this, data);
+                res.setHeader('X-Cache-TTL', ttlSeconds);
+                
+                // Call original json function
+                originalJson(data);
             };
+            
             next();
-        } catch (err) {
+            
+        } catch (error) {
+            // If Redis fails, skip cache and continue
+            console.error('Cache middleware error:', error.message);
+            res.setHeader('X-Cache', 'DISABLED');
             next();
         }
     };
 }
 
-module.exports = cache;
+// ============ CACHE INVALIDATION HELPERS ============
+
+/**
+ * Clear cache for specific pattern
+ * @param {string} pattern - Redis key pattern (e.g., 'cache:/routes*')
+ */
+async function clearCache(pattern = 'cache:*') {
+    try {
+        const keys = await redis.keys(pattern);
+        if (keys.length > 0) {
+            await redis.del(keys);
+            console.log(`Cleared ${keys.length} cache entries matching: ${pattern}`);
+        }
+        return keys.length;
+    } catch (error) {
+        console.error('Cache clear error:', error);
+        return 0;
+    }
+}
+
+/**
+ * Clear all cache
+ */
+async function clearAllCache() {
+    return clearCache('cache:*');
+}
+
+module.exports = { cache, clearCache, clearAllCache };

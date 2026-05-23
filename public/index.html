@@ -1,599 +1,740 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Gateway | Enterprise API Management Platform</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In | API Gateway</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #ffffff;
-            overflow-x: hidden;
-        }
+      body {
+        font-family: "Inter", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
 
-        /* Navigation */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            padding: 16px 32px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
+      .card {
+        background: white;
+        border-radius: 32px;
+        width: 100%;
+        max-width: 460px;
+        padding: 48px 40px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        animation: slideUp 0.5s ease-out;
+      }
 
-        .nav-container {
-            max-width: 1280px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
         }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 24px;
-            font-weight: 800;
-            cursor: pointer;
-        }
+      .logo {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 28px;
+        color: white;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
 
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 20px;
-        }
+      .logo:hover {
+        transform: scale(1.05);
+      }
 
-        .nav-links {
-            display: flex;
-            gap: 32px;
-            align-items: center;
-        }
+      h1 {
+        text-align: center;
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 8px;
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
 
-        .nav-links a {
-            text-decoration: none;
-            color: #1e293b;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
+      .subtitle {
+        text-align: center;
+        color: #64748b;
+        margin-bottom: 32px;
+      }
 
-        .nav-links a:hover {
-            color: #4f46e5;
-        }
+      .form-group {
+        margin-bottom: 20px;
+      }
 
-        .btn-outline {
-            padding: 8px 20px;
-            border: 2px solid #4f46e5;
-            background: transparent;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: 600;
-            color: #4f46e5;
-            transition: all 0.2s;
-        }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #1e293b;
+      }
 
-        .btn-outline:hover {
-            background: #4f46e5;
-            color: white;
-            transform: translateY(-2px);
-        }
+      .input-group {
+        position: relative;
+      }
 
-        .btn-primary {
-            padding: 8px 24px;
-            background: #4f46e5;
-            color: white;
-            border: none;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
+      .input-group i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+      }
 
-        .btn-primary:hover {
-            background: #4338ca;
-            transform: translateY(-2px);
-        }
+      input {
+        width: 100%;
+        padding: 14px 16px 14px 48px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 14px;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
 
-        /* Hero Section */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            padding: 120px 32px 80px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
+      input:focus {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      }
 
-        .hero-container {
-            max-width: 1280px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 60px;
-            align-items: center;
-            position: relative;
-            z-index: 1;
-        }
+      button {
+        width: 100%;
+        padding: 14px;
+        background: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 16px;
+      }
 
-        .hero-title {
-            font-size: 56px;
-            font-weight: 800;
-            line-height: 1.2;
-            margin-bottom: 24px;
-            background: linear-gradient(135deg, #ffffff, #e0e7ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+      button:hover {
+        background: #4338ca;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+      }
 
-        .hero-subtitle {
-            font-size: 18px;
-            opacity: 0.9;
-            margin-bottom: 32px;
-            line-height: 1.6;
-        }
+      button:active {
+        transform: translateY(0);
+      }
 
-        .hero-buttons {
-            display: flex;
-            gap: 16px;
-        }
+      .divider {
+        text-align: center;
+        margin: 28px 0;
+        position: relative;
+      }
 
-        .btn-white {
-            padding: 14px 32px;
-            background: white;
-            color: #4f46e5;
-            border: none;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+      .divider::before,
+      .divider::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: calc(50% - 56px);
+        height: 1px;
+        background: #e2e8f0;
+      }
 
-        .btn-white:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
+      .divider::before {
+        left: 0;
+      }
+      .divider::after {
+        right: 0;
+      }
 
-        .btn-transparent {
-            padding: 14px 32px;
-            background: transparent;
-            color: white;
-            border: 2px solid white;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+      .divider span {
+        background: white;
+        padding: 0 14px;
+        color: #64748b;
+        font-size: 12px;
+      }
 
-        .btn-transparent:hover {
-            background: white;
-            color: #4f46e5;
-            transform: translateY(-2px);
-        }
+      .social-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
 
-        .hero-stats {
-            display: flex;
-            gap: 40px;
-            margin-top: 48px;
-        }
+      .social-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 14px;
+        cursor: pointer;
+        font-weight: 500;
+        border: 1.5px solid #e2e8f0;
+        background: white;
+        transition: all 0.2s;
+      }
 
-        .stat-item .stat-value {
-            font-size: 32px;
-            font-weight: 800;
-        }
+      .social-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
 
-        .stat-item .stat-label {
-            font-size: 14px;
-            opacity: 0.8;
-        }
+      .social-btn i {
+        font-size: 20px;
+      }
 
-        .hero-image {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 32px;
-            padding: 40px;
-            backdrop-filter: blur(10px);
-            text-align: center;
-        }
+      .social-btn.google:hover {
+        background: #db4437;
+        color: white;
+        border-color: #db4437;
+      }
+      .social-btn.github:hover {
+        background: #24292f;
+        color: white;
+        border-color: #24292f;
+      }
+      .social-btn.facebook:hover {
+        background: #1877f2;
+        color: white;
+        border-color: #1877f2;
+      }
 
-        .hero-image i {
-            font-size: 64px;
-            margin-bottom: 20px;
-        }
+      .message {
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        display: none;
+        animation: slideDown 0.3s ease-out;
+      }
 
-        /* Features Section */
-        .features {
-            padding: 100px 32px;
-            background: #f8fafc;
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
         }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-        .section-header {
-            text-align: center;
-            max-width: 600px;
-            margin: 0 auto 60px;
-        }
+      .message.error {
+        background: #fee2e2;
+        color: #991b1b;
+        display: block;
+        border-left: 4px solid #991b1b;
+      }
+      .message.success {
+        background: #d1fae5;
+        color: #065f46;
+        display: block;
+        border-left: 4px solid #065f46;
+      }
+      .message.info {
+        background: #dbeafe;
+        color: #1e40af;
+        display: block;
+        border-left: 4px solid #1e40af;
+      }
 
-        .section-header h2 {
-            font-size: 48px;
-            font-weight: 800;
-            margin-bottom: 16px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+      .demo-info {
+        margin-top: 20px;
+        padding: 16px;
+        background: #f8fafc;
+        border-radius: 14px;
+        text-align: center;
+        font-size: 12px;
+        border: 1px solid #e2e8f0;
+      }
 
-        .section-header p {
-            color: #64748b;
-            font-size: 18px;
-        }
+      .demo-info strong {
+        color: #4f46e5;
+      }
 
-        .features-grid {
-            max-width: 1280px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 32px;
-        }
+      .back-link {
+        text-align: center;
+        margin-top: 20px;
+      }
 
-        .feature-card {
-            background: white;
-            padding: 40px 32px;
-            border-radius: 24px;
-            transition: all 0.3s;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
+      .back-link a {
+        color: #4f46e5;
+        text-decoration: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: color 0.2s;
+      }
 
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
+      .back-link a:hover {
+        color: #4338ca;
+        text-decoration: underline;
+      }
 
-        .feature-icon {
-            width: 72px;
-            height: 72px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 24px;
-            font-size: 32px;
-            color: white;
-        }
+      .mode-toggle {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+      }
 
-        .feature-card h3 {
-            font-size: 24px;
-            margin-bottom: 12px;
-        }
+      .mode-toggle a {
+        color: #4f46e5;
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+      }
 
-        .feature-card p {
-            color: #64748b;
-            line-height: 1.6;
-        }
+      .mode-toggle a:hover {
+        text-decoration: underline;
+      }
 
-        /* CTA Section */
-        .cta {
-            padding: 100px 32px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: white;
-            text-align: center;
+      @media (max-width: 480px) {
+        .card {
+          padding: 32px 24px;
         }
-
-        .cta h2 {
-            font-size: 48px;
-            margin-bottom: 16px;
+        h1 {
+          font-size: 28px;
         }
-
-        .cta p {
-            font-size: 18px;
-            margin-bottom: 32px;
-            opacity: 0.9;
-        }
-
-        .btn-cta {
-            padding: 16px 40px;
-            background: white;
-            color: #4f46e5;
-            border: none;
-            border-radius: 40px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Footer */
-        .footer {
-            background: #0f172a;
-            color: #94a3b8;
-            padding: 60px 32px 24px;
-        }
-
-        .footer-container {
-            max-width: 1280px;
-            margin: 0 auto;
-        }
-
-        .footer-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 48px;
-            margin-bottom: 48px;
-        }
-
-        .footer-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .footer-logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-        }
-
-        .footer-logo span {
-            font-size: 18px;
-            font-weight: 700;
-            color: white;
-        }
-
-        .footer-description {
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-            color: #94a3b8;
-        }
-
-        .footer-social {
-            display: flex;
-            gap: 16px;
-        }
-
-        .footer-social a {
-            width: 36px;
-            height: 36px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #94a3b8;
-            transition: all 0.3s;
-        }
-
-        .footer-social a:hover {
-            background: #4f46e5;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .footer-section h4 {
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-
-        .footer-section ul {
-            list-style: none;
-        }
-
-        .footer-section ul li {
-            margin-bottom: 12px;
-        }
-
-        .footer-section ul li a {
-            color: #94a3b8;
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.2s;
-        }
-
-        .footer-section ul li a:hover {
-            color: #4f46e5;
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 24px;
-            border-top: 1px solid #1e293b;
-            font-size: 14px;
-        }
-
-        .footer-bottom strong {
-            color: #4f46e5;
-        }
-
-        @media (max-width: 768px) {
-            .hero-container {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-            .hero-title {
-                font-size: 36px;
-            }
-            .hero-buttons {
-                justify-content: center;
-            }
-            .hero-stats {
-                justify-content: center;
-            }
-            .features-grid {
-                grid-template-columns: 1fr;
-                padding: 0 20px;
-            }
-            .nav-links {
-                display: none;
-            }
-            .section-header h2 {
-                font-size: 32px;
-            }
-            .cta h2 {
-                font-size: 32px;
-            }
-            .footer-grid {
-                grid-template-columns: 1fr;
-                gap: 32px;
-                text-align: center;
-            }
-            .footer-logo {
-                justify-content: center;
-            }
-            .footer-social {
-                justify-content: center;
-            }
-        }
+      }
     </style>
-</head>
-<body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo" onclick="window.location.href='/'">
-                <div class="logo-icon">AG</div>
-                <span>API Gateway</span>
-            </div>
-            <div class="nav-links">
-                <a href="#features">Features</a>
-                <a href="#pricing">Pricing</a>
-                <a href="#docs">Documentation</a>
-                <button class="btn-outline" id="signinBtn">Sign In</button>
-                <button class="btn-primary" id="getstartedBtn">Get Started</button>
-            </div>
-        </div>
-    </nav>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
 
-    <section class="hero">
-        <div class="hero-container">
-            <div>
-                <h1 class="hero-title">Enterprise API Gateway Built for Scale</h1>
-                <p class="hero-subtitle">Secure, fast, and reliable API management. Handle authentication, rate limiting, caching, and routing in one powerful platform.</p>
-                <div class="hero-buttons">
-                    <button class="btn-white" id="heroGetStartedBtn">Get Started Free</button>
-                    <button class="btn-transparent" id="heroSigninBtn">Sign In</button>
-                </div>
-                <div class="hero-stats">
-                    <div class="stat-item"><div class="stat-value">99.99%</div><div class="stat-label">Uptime SLA</div></div>
-                    <div class="stat-item"><div class="stat-value">&lt;50ms</div><div class="stat-label">Response Time</div></div>
-                    <div class="stat-item"><div class="stat-value">10K+</div><div class="stat-label">Requests/sec</div></div>
-                </div>
-            </div>
-            <div class="hero-image">
-                <i class="fas fa-chart-line"></i>
-                <h3 style="margin-bottom: 10px;">Real-time Analytics</h3>
-                <p>Monitor your API traffic, latency, and errors in real-time</p>
-            </div>
-        </div>
-    </section>
+  <body>
+    <div class="card">
+      <div class="logo" onclick="window.location.href = 'index.html'">
+        <i class="fas fa-cloud-upload-alt"></i>
+      </div>
 
-    <section class="features" id="features">
-        <div class="section-header">
-            <h2>Everything you need to manage your APIs</h2>
-            <p>Powerful features to secure, scale, and monitor your microservices</p>
-        </div>
-        <div class="features-grid">
-            <div class="feature-card"><div class="feature-icon"><i class="fas fa-lock"></i></div><h3>JWT Authentication</h3><p>Secure your APIs with JWT authentication and role-based access control.</p></div>
-            <div class="feature-card"><div class="feature-icon"><i class="fas fa-tachometer-alt"></i></div><h3>Rate Limiting</h3><p>Protect your services from abuse with configurable rate limiting per user or IP.</p></div>
-            <div class="feature-card"><div class="feature-icon"><i class="fas fa-database"></i></div><h3>Redis Caching</h3><p>Reduce latency and database load with intelligent response caching.</p></div>
-            <div class="feature-card"><div class="feature-icon"><i class="fas fa-route"></i></div><h3>Dynamic Routing</h3><p>Add or update routes instantly without restarting your gateway.</p></div>
-            <div class="feature-card"><div class="feature-icon"><i class="fas fa-chart-bar"></i></div><h3>Analytics Dashboard</h3><p>Gain insights into API usage, performance metrics, and error rates.</p></div>
-            <div class="feature-card"><div class="feature-icon"><i class="fab fa-google"></i></div><h3>Social Login</h3><p>Allow users to sign in with Google, GitHub, or Facebook.</p></div>
-        </div>
-    </section>
+      <h1 id="formTitle">Welcome Back</h1>
+      <p class="subtitle" id="formSubtitle">Sign in to your account</p>
 
-    <section class="cta">
-        <h2>Ready to get started?</h2>
-        <p>Join thousands of developers using API Gateway</p>
-        <button class="btn-cta" id="ctaGetStartedBtn">Start Free Trial</button>
-    </section>
+      <div id="message" class="message"></div>
 
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-grid">
-                <div class="footer-section">
-                    <div class="footer-logo">
-                        <div class="footer-logo-icon">AG</div>
-                        <span>API Gateway</span>
-                    </div>
-                    <p class="footer-description">Enterprise-grade API management platform built for scale, security, and performance.</p>
-                    <div class="footer-social">
-                        <a href="#"><i class="fab fa-github"></i></a>
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                    </div>
-                </div>
-                <div class="footer-section">
-                    <h4>Product</h4>
-                    <ul>
-                        <li><a href="#features">Features</a></li>
-                        <li><a href="#">Pricing</a></li>
-                        <li><a href="#">Documentation</a></li>
-                        <li><a href="#">API Reference</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Company</h4>
-                    <ul>
-                        <li><a href="#">About</a></li>
-                        <li><a href="#">Blog</a></li>
-                        <li><a href="#">Careers</a></li>
-                        <li><a href="#">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Legal</h4>
-                    <ul>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Service</a></li>
-                        <li><a href="#">Security</a></li>
-                        <li><a href="#">GDPR</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 API Gateway. Built by <strong>Binyam Yohannes</strong> | Full Stack Developer</p>
-            </div>
+      <div>
+        <div class="form-group" id="nameGroup" style="display: none">
+          <label>Full Name <span style="color: red">*</span></label>
+          <div class="input-group">
+            <i class="fas fa-user"></i>
+            <input type="text" id="fullName" placeholder="John Doe" />
+          </div>
         </div>
-    </footer>
+
+        <div class="form-group">
+          <label>Email address</label>
+          <div class="input-group">
+            <i class="fas fa-envelope"></i>
+            <input
+              type="email"
+              id="loginEmail"
+              placeholder="admin@gateway.com"
+              value="admin@gateway.com"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-group">
+            <i class="fas fa-lock"></i>
+            <input
+              type="password"
+              id="loginPassword"
+              placeholder="Enter your password"
+              value="admin123"
+            />
+          </div>
+        </div>
+
+        <div class="form-group" id="confirmGroup" style="display: none">
+          <label>Confirm Password</label>
+          <div class="input-group">
+            <i class="fas fa-check-circle"></i>
+            <input
+              type="password"
+              id="confirmPassword"
+              placeholder="Confirm your password"
+            />
+          </div>
+        </div>
+
+        <button id="actionButton" onclick="handleAuth()">Sign In</button>
+      </div>
+
+      <div class="mode-toggle">
+        <span id="toggleText">Don't have an account? </span>
+        <a id="toggleLink" onclick="toggleMode()">Create an account</a>
+      </div>
+
+      <div class="divider"><span>or continue with</span></div>
+
+      <div class="social-buttons">
+        <button class="social-btn google" onclick="socialLogin('google')">
+          <i class="fab fa-google"></i> Continue with Google
+        </button>
+
+        <button class="social-btn github" onclick="socialLogin('github')">
+          <i class="fab fa-github"></i> Continue with GitHub
+        </button>
+        <button class="social-btn facebook" onclick="socialLogin('facebook')">
+          <i class="fab fa-facebook-f"></i> Continue with Facebook
+        </button>
+      </div>
+
+      <div class="demo-info">
+        <strong>📋 Demo Account</strong><br />
+        Email: <strong>admin@gateway.com</strong><br />
+        Password: <strong>admin123</strong>
+      </div>
+
+      <div class="back-link">
+        <a onclick="window.location.href = 'index.html'">
+          <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+      </div>
+    </div>
 
     <script>
-        document.getElementById('signinBtn').onclick = () => window.location.href = '/login.html';
-        document.getElementById('getstartedBtn').onclick = () => window.location.href = '/login.html?register=true';
-        document.getElementById('heroGetStartedBtn').onclick = () => window.location.href = '/login.html?register=true';
-        document.getElementById('heroSigninBtn').onclick = () => window.location.href = '/login.html';
-        document.getElementById('ctaGetStartedBtn').onclick = () => window.location.href = '/login.html?register=true';
+      // FIXED: Cookie-based authentication only - NO localStorage
+      const urlParams = new URLSearchParams(window.location.search);
+      let isRegisterMode = urlParams.get("register") === "true";
+      let googleInitialized = false;
+      let googleClientId = null;
+
+      const formTitle = document.getElementById("formTitle");
+      const formSubtitle = document.getElementById("formSubtitle");
+      const actionButton = document.getElementById("actionButton");
+      const nameGroup = document.getElementById("nameGroup");
+      const confirmGroup = document.getElementById("confirmGroup");
+      const toggleText = document.getElementById("toggleText");
+      const toggleLink = document.getElementById("toggleLink");
+      const loginEmail = document.getElementById("loginEmail");
+      const loginPassword = document.getElementById("loginPassword");
+      const fullName = document.getElementById("fullName");
+      const confirmPassword = document.getElementById("confirmPassword");
+
+      function initializeMode() {
+        if (isRegisterMode) {
+          formTitle.textContent = "Create Account";
+          formSubtitle.textContent = "Get started with API Gateway";
+          actionButton.textContent = "Sign Up";
+          nameGroup.style.display = "block";
+          confirmGroup.style.display = "block";
+          toggleText.textContent = "Already have an account? ";
+          toggleLink.textContent = "Sign in here";
+        } else {
+          formTitle.textContent = "Welcome Back";
+          formSubtitle.textContent = "Sign in to your account";
+          actionButton.textContent = "Sign In";
+          nameGroup.style.display = "none";
+          confirmGroup.style.display = "none";
+          toggleText.textContent = "Don't have an account? ";
+          toggleLink.textContent = "Create an account";
+        }
+      }
+
+      function toggleMode() {
+        isRegisterMode = !isRegisterMode;
+        const newUrl = isRegisterMode
+          ? "?register=true"
+          : window.location.pathname;
+        window.history.pushState({}, "", newUrl);
+        initializeMode();
+
+        const messageEl = document.getElementById("message");
+        messageEl.className = "message";
+        messageEl.style.display = "none";
+
+        loginEmail.value = "";
+        loginPassword.value = "";
+        if (fullName) fullName.value = "";
+        if (confirmPassword) confirmPassword.value = "";
+      }
+
+      function showMessage(msg, type) {
+        const el = document.getElementById("message");
+        el.textContent = msg;
+        el.className = `message ${type}`;
+        el.style.display = "block";
+        setTimeout(() => {
+          el.style.display = "none";
+          el.className = "message";
+        }, 5000);
+      }
+
+      // Fetch Google Client ID from backend
+      async function fetchGoogleClientId() {
+        try {
+          const response = await fetch(`/api/config/google`);
+          const data = await response.json();
+          googleClientId = data.clientId;
+          console.log("Google Client ID fetched from backend");
+          return googleClientId;
+        } catch (error) {
+          console.error("Failed to fetch Google Client ID:", error);
+          return null;
+        }
+      }
+
+      // Initialize Google Sign-In
+      async function initGoogleSignIn() {
+        if (!googleClientId) {
+          await fetchGoogleClientId();
+        }
+
+        if (
+          googleClientId &&
+          typeof google !== "undefined" &&
+          google.accounts &&
+          !googleInitialized
+        ) {
+          googleInitialized = true;
+          google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: handleGoogleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true,
+          });
+          console.log("Google Sign-In initialized");
+        }
+      }
+
+      // Handle Google credential response
+      function handleGoogleCredentialResponse(response) {
+        const id_token = response.credential;
+
+        fetch(`/auth/google`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // KEY FIX: Include cookies
+          body: JSON.stringify({ token: id_token }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.message === "Login successful") {
+              showMessage("Google login successful! Redirecting...", "success");
+              setTimeout(() => {
+                window.location.href = "/admin.html";
+              }, 1500);
+            } else {
+              showMessage(data.error || "Google login failed", "error");
+            }
+          })
+          .catch((err) => {
+            console.error("Google login error:", err);
+            showMessage("Google login error. Please try email login.", "error");
+          });
+      }
+
+      // Social login function
+      function socialLogin(provider) {
+        if (provider === "google") {
+          if (
+            typeof google !== "undefined" &&
+            google.accounts &&
+            google.accounts.id &&
+            googleClientId
+          ) {
+            google.accounts.id.prompt();
+          } else {
+            showMessage("Initializing Google Sign-In...", "info");
+            const checkInterval = setInterval(async function () {
+              if (
+                googleClientId &&
+                typeof google !== "undefined" &&
+                google.accounts &&
+                google.accounts.id
+              ) {
+                clearInterval(checkInterval);
+                google.accounts.id.prompt();
+              } else if (!googleClientId) {
+                await fetchGoogleClientId();
+              }
+            }, 100);
+
+            setTimeout(function () {
+              clearInterval(checkInterval);
+              if (
+                !googleClientId ||
+                typeof google === "undefined" ||
+                !google.accounts
+              ) {
+                showMessage(
+                  "Google Sign-In failed to load. Please refresh the page.",
+                  "error",
+                );
+              }
+            }, 5000);
+          }
+        } else {
+          showMessage(`Redirecting to ${provider} login...`, "info");
+          window.location.href = `/auth/${provider}`;
+        }
+      }
+
+      async function handleAuth() {
+        const email = loginEmail.value.trim();
+        const password = loginPassword.value;
+
+        if (!email || !password) {
+          showMessage("Please enter email and password", "error");
+          return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          showMessage("Please enter a valid email address", "error");
+          return;
+        }
+
+        if (isRegisterMode) {
+          const name = fullName.value.trim();
+          if (!name) {
+            showMessage("Please enter your full name", "error");
+            return;
+          }
+          if (password !== confirmPassword.value) {
+            showMessage("Passwords do not match", "error");
+            return;
+          }
+          if (password.length < 6) {
+            showMessage("Password must be at least 6 characters", "error");
+            return;
+          }
+
+          const btn = document.getElementById("actionButton");
+          const originalText = btn.textContent;
+          btn.textContent = "Creating account...";
+          btn.disabled = true;
+
+          try {
+            const res = await fetch(`/auth/register`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ 
+                email: email, 
+                password: password,
+                name: name 
+              }),
+            });
+            
+            const data = await res.json();
+
+            if (res.ok) {
+              showMessage("Account created! Please login.", "success");
+              setTimeout(() => {
+                // Switch to login mode
+                isRegisterMode = false;
+                initializeMode();
+                loginEmail.value = email;
+                loginPassword.value = "";
+                fullName.value = "";
+                confirmPassword.value = "";
+              }, 2000);
+            } else {
+              showMessage(data.error || "Registration failed", "error");
+              btn.textContent = originalText;
+              btn.disabled = false;
+            }
+          } catch (err) {
+            console.error("Register error:", err);
+            showMessage("Connection error", "error");
+            btn.textContent = originalText;
+            btn.disabled = false;
+          }
+        } else {
+          const btn = document.getElementById("actionButton");
+          const originalText = btn.textContent;
+          btn.textContent = "Signing in...";
+          btn.disabled = true;
+
+          try {
+            const res = await fetch(`/auth/login`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include", // KEY FIX: This ensures cookies are saved
+              body: JSON.stringify({ email: email, password: password }),
+            });
+            
+            const data = await res.json();
+
+            if (res.ok && data.message === "Login successful") {
+              showMessage("Login successful! Redirecting...", "success");
+              setTimeout(() => {
+                window.location.href = "/admin.html";
+              }, 1500);
+            } else {
+              showMessage(data.error || "Invalid credentials", "error");
+              btn.textContent = originalText;
+              btn.disabled = false;
+            }
+          } catch (err) {
+            console.error("Login error:", err);
+            showMessage("Connection error", "error");
+            btn.textContent = originalText;
+            btn.disabled = false;
+          }
+        }
+      }
+
+      // Check if already logged in via cookie (NOT localStorage)
+      async function checkExistingLogin() {
+        try {
+          const res = await fetch(`/admin/me`, {
+            credentials: "include"
+          });
+          if (res.ok) {
+            // Already logged in, redirect to admin
+            window.location.href = "/admin.html";
+          }
+        } catch (err) {
+          // Not logged in, stay on login page
+        }
+      }
+
+      initializeMode();
+
+      // Fetch Google Client ID and initialize on page load
+      window.addEventListener("load", async function () {
+        await fetchGoogleClientId();
+        await checkExistingLogin(); // Check cookie-based login
+
+        if (typeof google !== "undefined" && google.accounts) {
+          await initGoogleSignIn();
+        } else {
+          setTimeout(async function () {
+            if (typeof google !== "undefined" && google.accounts) {
+              await initGoogleSignIn();
+            }
+          }, 1000);
+        }
+      });
     </script>
-</body>
+  </body>
 </html>

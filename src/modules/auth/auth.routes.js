@@ -1,13 +1,14 @@
 ﻿const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../../config/database');
 const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
 
-// Rate limiters
+// ============ RATE LIMITERS ============
 const registerLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5,
@@ -18,6 +19,23 @@ const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
     message: { error: 'Too many login attempts. Please try again later.' }
+});
+
+// ============ COOKIE OPTIONS ============
+const getCookieOptions = () => ({
+    httpOnly: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+});
+
+const getRefreshCookieOptions = () => ({
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 });
 
 // ============ HELPER FUNCTIONS ============
@@ -36,7 +54,6 @@ function logActivity(type, email, status, details = {}) {
     const logEntry = `[${timestamp}] ${type} | ${email} | ${status} | IP: ${details.ip || 'unknown'} | UA: ${details.ua?.substring(0, 50) || 'unknown'}`;
     console.log(logEntry);
     
-    // Also save to database (optional)
     if (process.env.NODE_ENV === 'production') {
         pool.query(
             `INSERT INTO activity_logs (type, email, status, ip_address, user_agent, details)
@@ -45,6 +62,23 @@ function logActivity(type, email, status, details = {}) {
         ).catch(err => console.error('Failed to log activity:', err.message));
     }
 }
+
+// ============ AUTHENTICATION MIDDLEWARE (COOKIE-BASED) ============
+const authenticateCookie = async (req, res, next) => {
+    const token = req.cookies.adminToken || req.cookies.devToken;
+    
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided. Please login.' });
+    }
+    
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        return res.status(401).json({ error: 'Invalid or expired token. Please login again.' });
+    }
+};
 
 // ============ REGISTER ============
 router.post('/register', registerLimiter, [
@@ -59,10 +93,8 @@ router.post('/register', registerLimiter, [
 
     const { name, email, password } = req.body;
     
-    // Log attempt
     logActivity('REGISTER_ATTEMPT', email, 'PENDING', { ip: req.ip, ua: req.headers['user-agent'] });
     
-    // Validate password strength
     const passwordErrors = validatePassword(password);
     if (passwordErrors.length > 0) {
         logActivity('REGISTER_FAILED', email, 'WEAK_PASSWORD', { ip: req.ip, errors: passwordErrors });
@@ -70,21 +102,16 @@ router.post('/register', registerLimiter, [
     }
     
     try {
-        // Check if user exists
         const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
         if (existing.rows.length > 0) {
             logActivity('REGISTER_FAILED', email, 'ALREADY_EXISTS', { ip: req.ip });
             return res.status(400).json({ error: 'User already exists' });
         }
         
-        // Hash password with higher salt rounds for production
         const saltRounds = process.env.NODE_ENV === 'production' ? 12 : 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-        
-        // Create verification token
         const verificationToken = crypto.randomBytes(32).toString('hex');
         
-        // Create user
         const result = await pool.query(
             `INSERT INTO users (email, password_hash, name, role, is_verified, verification_token, created_at, ip_address)
              VALUES ($1, $2, $3, 'user', false, $4, NOW(), $5)
@@ -98,9 +125,6 @@ router.post('/register', registerLimiter, [
             userId: result.rows[0].id 
         });
         
-        // In production, send verification email here
-        // await sendVerificationEmail(email, verificationToken);
-        
         res.status(201).json({ 
             message: 'Registration successful! Please verify your email.',
             user: { id: result.rows[0].id, email: result.rows[0].email, name: result.rows[0].name }
@@ -112,7 +136,7 @@ router.post('/register', registerLimiter, [
     }
 });
 
-// ============ LOGIN ============
+// ============ LOGIN (COOKIE-BASED) ============
 router.post('/login', loginLimiter, [
     body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
     body('password').notEmpty().withMessage('Password is required')
@@ -124,7 +148,6 @@ router.post('/login', loginLimiter, [
 
     const { email, password } = req.body;
     
-    // Log attempt
     logActivity('LOGIN_ATTEMPT', email, 'PENDING', { ip: req.ip, ua: req.headers['user-agent'] });
     
     try {
@@ -135,50 +158,49 @@ router.post('/login', loginLimiter, [
         
         if (result.rows.length === 0) {
             logActivity('LOGIN_FAILED', email, 'USER_NOT_FOUND', { ip: req.ip });
-            // Use same message to prevent user enumeration
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         
         const user = result.rows[0];
         
-        // Check if email is verified
         if (!user.is_verified && process.env.NODE_ENV === 'production') {
             logActivity('LOGIN_FAILED', email, 'NOT_VERIFIED', { ip: req.ip });
             return res.status(401).json({ error: 'Please verify your email before logging in' });
         }
         
-        // Verify password
         const valid = await bcrypt.compare(password, user.password_hash);
         if (!valid) {
             logActivity('LOGIN_FAILED', email, 'INVALID_PASSWORD', { ip: req.ip });
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         
-        // Update user stats
         await pool.query(
             `UPDATE users SET last_login = NOW(), last_ip = $1, login_count = login_count + 1 WHERE id = $2`,
             [req.ip, user.id]
         );
         
-        // Generate JWT with refresh token support
+        // Generate JWT
         const token = jwt.sign(
             { 
                 id: user.id, 
                 email: user.email, 
                 role: user.role,
-                name: user.name,
-                iat: Math.floor(Date.now() / 1000)
+                name: user.name
             },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
         
-        // Generate refresh token
         const refreshToken = jwt.sign(
             { id: user.id },
             process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
+        
+        // ✅ SET COOKIES (instead of sending token in JSON)
+        res.cookie('adminToken', token, getCookieOptions());
+        res.cookie('devToken', token, getCookieOptions());
+        res.cookie('refreshToken', refreshToken, getRefreshCookieOptions());
         
         logActivity('LOGIN_SUCCESS', email, 'SUCCESS', { 
             ip: req.ip, 
@@ -189,8 +211,6 @@ router.post('/login', loginLimiter, [
         
         res.json({ 
             message: 'Login successful',
-            token,
-            refresh_token: refreshToken,
             user: { 
                 id: user.id, 
                 email: user.email, 
@@ -207,14 +227,14 @@ router.post('/login', loginLimiter, [
 
 // ============ REFRESH TOKEN ============
 router.post('/refresh-token', async (req, res) => {
-    const { refresh_token } = req.body;
+    const refreshToken = req.cookies.refreshToken;
     
-    if (!refresh_token) {
+    if (!refreshToken) {
         return res.status(400).json({ error: 'Refresh token required' });
     }
     
     try {
-        const decoded = jwt.verify(refresh_token, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET);
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET);
         const user = await pool.query('SELECT id, email, role FROM users WHERE id = $1', [decoded.id]);
         
         if (user.rows.length === 0) {
@@ -227,9 +247,13 @@ router.post('/refresh-token', async (req, res) => {
             { expiresIn: '24h' }
         );
         
+        // ✅ Set new cookie
+        res.cookie('adminToken', newToken, getCookieOptions());
+        res.cookie('devToken', newToken, getCookieOptions());
+        
         logActivity('TOKEN_REFRESH', user.rows[0].email, 'SUCCESS', { ip: req.ip });
         
-        res.json({ token: newToken });
+        res.json({ message: 'Token refreshed successfully' });
         
     } catch (error) {
         logActivity('TOKEN_REFRESH', 'unknown', 'FAILED', { ip: req.ip, error: error.message });
@@ -237,37 +261,25 @@ router.post('/refresh-token', async (req, res) => {
     }
 });
 
-// ============ LOGOUT ============
+// ============ LOGOUT (Clear Cookies) ============
 router.post('/logout', (req, res) => {
-    const authHeader = req.headers.authorization;
-    let email = 'unknown';
+    const email = req.cookies.adminToken ? 'authenticated' : 'unknown';
     
-    if (authHeader) {
-        try {
-            const token = authHeader.split(' ')[1];
-            const decoded = jwt.decode(token);
-            email = decoded?.email || 'unknown';
-        } catch(e) {}
-    }
+    // ✅ Clear all cookies
+    res.clearCookie('adminToken');
+    res.clearCookie('devToken');
+    res.clearCookie('refreshToken');
     
     logActivity('LOGOUT', email, 'SUCCESS', { ip: req.ip });
     res.json({ message: 'Logged out successfully' });
 });
 
-// ============ GET PROFILE ============
-router.get('/profile', async (req, res) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return res.status(401).json({ error: 'No token provided' });
-    }
-    
-    const token = authHeader.split(' ')[1];
-    
+// ============ GET PROFILE (COOKIE-BASED) ============
+router.get('/profile', authenticateCookie, async (req, res) => {
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await pool.query(
             'SELECT id, email, name, role, is_verified, created_at, last_login, login_count FROM users WHERE id = $1',
-            [decoded.id]
+            [req.user.id]
         );
         
         if (user.rows.length === 0) {
@@ -277,18 +289,12 @@ router.get('/profile', async (req, res) => {
         res.json({ user: user.rows[0] });
         
     } catch (error) {
-        res.status(401).json({ error: 'Invalid token' });
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// ============ CHANGE PASSWORD ============
-router.post('/change-password', async (req, res) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return res.status(401).json({ error: 'No token provided' });
-    }
-    
-    const token = authHeader.split(' ')[1];
+// ============ CHANGE PASSWORD (COOKIE-BASED) ============
+router.post('/change-password', authenticateCookie, async (req, res) => {
     const { current_password, new_password } = req.body;
     
     if (!current_password || !new_password) {
@@ -301,8 +307,11 @@ router.post('/change-password', async (req, res) => {
     }
     
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await pool.query('SELECT password_hash FROM users WHERE id = $1', [decoded.id]);
+        const user = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+        
+        if (user.rows.length === 0) {
+            return res.status(401).json({ error: 'User not found' });
+        }
         
         const valid = await bcrypt.compare(current_password, user.rows[0].password_hash);
         if (!valid) {
@@ -310,14 +319,15 @@ router.post('/change-password', async (req, res) => {
         }
         
         const hashedPassword = await bcrypt.hash(new_password, 12);
-        await pool.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [hashedPassword, decoded.id]);
+        await pool.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [hashedPassword, req.user.id]);
         
-        logActivity('PASSWORD_CHANGE', decoded.email, 'SUCCESS', { ip: req.ip });
+        logActivity('PASSWORD_CHANGE', req.user.email, 'SUCCESS', { ip: req.ip });
         
         res.json({ message: 'Password changed successfully' });
         
     } catch (error) {
-        res.status(401).json({ error: 'Invalid token' });
+        console.error("Change password error:", error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 

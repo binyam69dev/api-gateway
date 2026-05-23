@@ -1,0 +1,493 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Sign In | API Gateway</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 32px;
+            width: 100%;
+            max-width: 480px;
+            padding: 48px 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 28px;
+            color: white;
+            cursor: pointer;
+        }
+        h1 {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 32px;
+        }
+        .tabs {
+            display: flex;
+            gap: 8px;
+            background: #f1f5f9;
+            padding: 5px;
+            border-radius: 16px;
+            margin-bottom: 28px;
+        }
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 12px;
+            font-weight: 600;
+            background: none;
+            border: none;
+            color: #64748b;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            background: white;
+            color: #4f46e5;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .input-group {
+            position: relative;
+        }
+        .input-group i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+        input {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #4338ca;
+            transform: translateY(-2px);
+        }
+        .divider {
+            text-align: center;
+            margin: 28px 0;
+            position: relative;
+        }
+        .divider::before,
+        .divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: calc(50% - 56px);
+            height: 1px;
+            background: #e2e8f0;
+        }
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+        .divider span {
+            background: white;
+            padding: 0 14px;
+            color: #64748b;
+            font-size: 12px;
+        }
+        .social-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 500;
+            border: 1.5px solid #e2e8f0;
+            background: white;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .social-btn i { font-size: 20px; }
+        .social-btn.google { color: #db4437; border-color: #db4437; }
+        .social-btn.google:hover { background: #db4437; color: white; }
+        .social-btn.github { color: #24292f; border-color: #24292f; }
+        .social-btn.github:hover { background: #24292f; color: white; }
+        .social-btn.facebook { color: #1877f2; border-color: #1877f2; }
+        .social-btn.facebook:hover { background: #1877f2; color: white; }
+        .message {
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            display: block;
+            border-left: 4px solid #991b1b;
+        }
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            display: block;
+            border-left: 4px solid #065f46;
+        }
+        .demo-info {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 14px;
+            text-align: center;
+            font-size: 12px;
+        }
+        .demo-info strong { color: #4f46e5; }
+        .back-link { text-align: center; margin-top: 20px; }
+        .back-link a {
+            color: #4f46e5;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        @media (max-width: 480px) {
+            .card { padding: 32px 24px; }
+            h1 { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo" onclick="window.location.href='developer-portal.html'">
+            <i class="fas fa-code"></i>
+        </div>
+        <h1>Developer Portal</h1>
+        <p class="subtitle">Sign in or create your account</p>
+
+        <div id="message" class="message"></div>
+
+        <div class="tabs">
+            <button class="tab active" id="loginTab" onclick="showTab('login')">Sign In</button>
+            <button class="tab" id="registerTab" onclick="showTab('register')">Create Account</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginForm">
+            <div class="form-group">
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="loginEmail" placeholder="Email address" value="user@example.com">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="loginPassword" placeholder="Password" value="user123">
+                </div>
+            </div>
+            <button onclick="doLogin()">Sign In</button>
+        </div>
+
+        <!-- Register Form -->
+        <div id="registerForm" style="display: none;">
+            <div class="form-group">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="regName" placeholder="Full name">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="regEmail" placeholder="Email address">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="regPassword" placeholder="Password (min 6 characters)">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <i class="fas fa-check-circle"></i>
+                    <input type="password" id="regConfirmPassword" placeholder="Confirm password">
+                </div>
+            </div>
+            <button onclick="doRegister()">Create Account</button>
+        </div>
+
+        <div class="divider"><span>or continue with</span></div>
+
+        <div class="social-buttons">
+            <button class="social-btn google" onclick="socialLogin('google')">
+                <i class="fab fa-google"></i> Continue with Google
+            </button>
+            <button class="social-btn github" onclick="socialLogin('github')">
+                <i class="fab fa-github"></i> Continue with GitHub
+            </button>
+            <button class="social-btn facebook" onclick="socialLogin('facebook')">
+                <i class="fab fa-facebook-f"></i> Continue with Facebook
+            </button>
+        </div>
+
+        <div class="demo-info">
+            <strong>📋 Demo Account</strong><br />
+            Email: <strong>user@example.com</strong><br />
+            Password: <strong>user123</strong>
+        </div>
+
+        <div class="back-link">
+            <a onclick="window.location.href='developer-portal.html'">← Back to Portal</a>
+        </div>
+    </div>
+
+    <script>
+        function showMessage(msg, type) {
+            const el = document.getElementById("message");
+            el.textContent = msg;
+            el.className = `message ${type}`;
+            setTimeout(() => {
+                el.style.display = "none";
+            }, 5000);
+        }
+
+        function showTab(tab) {
+            const loginForm = document.getElementById("loginForm");
+            const registerForm = document.getElementById("registerForm");
+            const loginTab = document.getElementById("loginTab");
+            const registerTab = document.getElementById("registerTab");
+
+            if (tab === "login") {
+                loginForm.style.display = "block";
+                registerForm.style.display = "none";
+                loginTab.classList.add("active");
+                registerTab.classList.remove("active");
+            } else {
+                loginForm.style.display = "none";
+                registerForm.style.display = "block";
+                registerTab.classList.add("active");
+                loginTab.classList.remove("active");
+            }
+        }
+
+       // In developer-auth.html, update the login success handler
+async function doLogin() {
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
+    
+    if (!email || !password) {
+        showMessage("Please enter email and password", "error");
+        return;
+    }
+    
+    const btn = document.querySelector("#loginForm button");
+    const originalText = btn.textContent;
+    btn.textContent = "Signing in...";
+    btn.disabled = true;
+    
+    try {
+        const res = await fetch(`/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ email, password }),
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok && data.message === "Login successful") {
+            showMessage("Login successful! Redirecting...", "success");
+            setTimeout(() => {
+                // Always redirect to developer dashboard
+                window.location.href = "/developer-dashboard.html";
+            }, 1500);
+        } else {
+            showMessage(data.error || "Invalid credentials", "error");
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    } catch (err) {
+        console.error("Login error:", err);
+        showMessage("Connection error. Please try again.", "error");
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
+        async function doRegister() {
+            const name = document.getElementById("regName").value.trim();
+            const email = document.getElementById("regEmail").value.trim();
+            const password = document.getElementById("regPassword").value;
+            const confirmPassword = document.getElementById("regConfirmPassword").value;
+            
+            // Validation
+            if (!name) {
+                showMessage("Please enter your full name", "error");
+                return;
+            }
+            
+            if (!email) {
+                showMessage("Please enter your email address", "error");
+                return;
+            }
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showMessage("Please enter a valid email address", "error");
+                return;
+            }
+            
+            if (!password) {
+                showMessage("Please enter a password", "error");
+                return;
+            }
+            
+            if (password.length < 6) {
+                showMessage("Password must be at least 6 characters", "error");
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showMessage("Passwords do not match", "error");
+                return;
+            }
+            
+            const btn = document.querySelector("#registerForm button");
+            const originalText = btn.textContent;
+            btn.textContent = "Creating account...";
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch(`/auth/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({ 
+                        name: name, 
+                        email: email, 
+                        password: password 
+                    }),
+                });
+                
+                const data = await res.json();
+                
+                if (res.status === 201 || res.ok) {
+                    showMessage("Account created successfully! Please login.", "success");
+                    
+                    // Clear form
+                    document.getElementById("regName").value = "";
+                    document.getElementById("regEmail").value = "";
+                    document.getElementById("regPassword").value = "";
+                    document.getElementById("regConfirmPassword").value = "";
+                    
+                    // Switch to login tab after 2 seconds
+                    setTimeout(() => {
+                        showTab("login");
+                        document.getElementById("loginEmail").value = email;
+                        document.getElementById("loginPassword").value = "";
+                        showMessage("You can now login with your new account!", "success");
+                    }, 2000);
+                } else {
+                    showMessage(data.error || "Registration failed. Please try again.", "error");
+                }
+                btn.textContent = originalText;
+                btn.disabled = false;
+            } catch (err) {
+                console.error("Register error:", err);
+                showMessage("Connection error. Please try again.", "error");
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function socialLogin(provider) {
+            if (provider === "google") {
+                window.location.href = `/auth/developer/google`;
+            } else if (provider === "github") {
+                window.location.href = `/auth/developer/github`;
+            } else if (provider === "facebook") {
+                window.location.href = `/auth/developer/facebook`;
+            }
+        }
+
+      // Check if already logged in
+async function checkAlreadyLoggedIn() {
+    try {
+        const res = await fetch(`/auth/profile`, {
+            credentials: "include"
+        });
+        if (res.ok) {
+            // Already logged in, go to developer dashboard
+            window.location.href = "/developer-dashboard.html";
+        }
+    } catch (err) {
+        // Not logged in, stay on page
+    }
+}
+        // Initialize
+        checkAlreadyLoggedIn();
+    </script>
+</body>
+</html>
