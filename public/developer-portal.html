@@ -1,8 +1,8 @@
-﻿<!doctype html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>API Gateway | Enterprise API Management</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
@@ -74,6 +74,110 @@
         color: var(--text-color);
         min-height: 100vh;
         transition: all 0.3s ease;
+        overflow-x: hidden;
+      }
+
+      /* Mobile Menu Button - Hamburger */
+      .mobile-menu-btn {
+        position: fixed;
+        top: 16px;
+        right: 20px;
+        z-index: 1100;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        width: 44px;
+        height: 44px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 20px;
+        color: white;
+        transition: all 0.3s;
+      }
+      
+      .mobile-menu-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+      
+      /* Mobile Sidebar Navigation */
+      .mobile-nav {
+        position: fixed;
+        top: 0;
+        right: -280px;
+        width: 280px;
+        height: 100vh;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(20px);
+        z-index: 1050;
+        padding: 80px 24px 24px;
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .mobile-nav.open {
+        right: 0;
+      }
+      
+      .mobile-nav-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1040;
+        display: none;
+      }
+      
+      .mobile-nav-overlay.active {
+        display: block;
+      }
+      
+      .mobile-nav a, .mobile-nav button {
+        padding: 14px 16px;
+        width: 100%;
+        text-align: left;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      
+      .mobile-nav a:hover, .mobile-nav button:hover {
+        background: var(--primary);
+      }
+      
+      .mobile-nav .theme-mobile {
+        margin-top: 20px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        padding-top: 20px;
+      }
+      
+      .mobile-theme-options {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      
+      .mobile-theme-options button {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        font-size: 13px;
+        background: rgba(255, 255, 255, 0.1);
       }
 
       /* Header - Fixed Position */
@@ -115,7 +219,7 @@
         color: white;
       }
 
-      /* Nav Links */
+      /* Desktop Nav Links */
       .nav-links {
         display: flex;
         align-items: center;
@@ -240,7 +344,7 @@
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
       }
 
-      /* Hero Section - Add padding for fixed header */
+      /* Hero Section */
       .hero {
         text-align: center;
         padding: 140px 20px 80px;
@@ -251,6 +355,7 @@
         margin-bottom: 20px;
         background: linear-gradient(135deg, #ffffff, #e0e7ff, #c7d2fe);
         -webkit-background-clip: text;
+        background-clip: text;
         -webkit-text-fill-color: transparent;
         animation: fadeInUp 0.8s ease;
       }
@@ -428,16 +533,75 @@
         color: var(--primary);
       }
 
+      /* Responsive Breakpoints */
+      @media (max-width: 992px) {
+        .features {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 24px;
+        }
+        .footer-grid {
+          grid-template-columns: 2fr 1fr 1fr;
+          gap: 32px;
+        }
+      }
+
       @media (max-width: 768px) {
+        /* Hide desktop nav, show hamburger */
+        .nav-links {
+          display: none;
+        }
+        .mobile-menu-btn {
+          display: flex;
+        }
+        .navbar {
+          padding: 12px 20px;
+        }
         .hero h1 {
           font-size: 36px;
         }
+        .hero p {
+          font-size: 15px;
+        }
+        .hero {
+          padding: 120px 16px 60px;
+        }
         .features {
           grid-template-columns: 1fr;
+          gap: 20px;
+          margin: 40px auto;
+        }
+        .feature {
+          padding: 28px 20px;
+        }
+        .feature i {
+          font-size: 36px;
+        }
+        .feature h3 {
+          font-size: 18px;
+        }
+        .cta-section {
+          margin: 20px 16px;
+          padding: 40px 20px;
+          border-radius: 32px;
+        }
+        .cta-section h2 {
+          font-size: 24px;
+        }
+        .cta-buttons {
+          gap: 12px;
+        }
+        .btn-primary, .btn-outline {
+          padding: 10px 20px;
+          font-size: 13px;
+        }
+        .footer {
+          padding: 40px 20px 24px;
+          margin-top: 40px;
         }
         .footer-grid {
           grid-template-columns: 1fr;
           text-align: center;
+          gap: 32px;
         }
         .footer-logo {
           justify-content: center;
@@ -445,30 +609,78 @@
         .footer-social {
           justify-content: center;
         }
-        .navbar {
-          padding: 12px 20px;
+        .footer-section h4 {
+          margin-bottom: 12px;
         }
-        .nav-links {
-          gap: 12px;
-        }
-        .btn-outline,
-        .btn-primary {
-          padding: 6px 14px;
-          font-size: 12px;
-        }
-        .theme-btn-header {
-          padding: 6px 12px;
-        }
-        .cta-section h2 {
+      }
+      
+      @media (max-width: 480px) {
+        .hero h1 {
           font-size: 28px;
         }
-        .hero {
-          padding: 120px 16px 60px;
+        .hero p {
+          font-size: 14px;
+        }
+        .cta-section h2 {
+          font-size: 20px;
+        }
+        .cta-buttons {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .cta-buttons button {
+          width: 100%;
+        }
+        .feature p {
+          font-size: 13px;
+        }
+      }
+      
+      /* Smooth scroll behavior */
+      html {
+        scroll-behavior: smooth;
+      }
+      
+      /* Touch-friendly button sizes */
+      button, .btn-primary, .btn-outline, .theme-btn-header, .mobile-menu-btn {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      /* Improved tap targets on mobile */
+      @media (hover: none) and (pointer: coarse) {
+        button, .btn-primary, .btn-outline, .theme-btn-header, .mobile-menu-btn, .nav-links a {
+          min-height: 44px;
         }
       }
     </style>
   </head>
   <body>
+    <!-- Mobile Hamburger Button -->
+    <div class="mobile-menu-btn" id="mobileMenuBtn">
+      <i class="fas fa-bars"></i>
+    </div>
+    
+    <!-- Mobile Navigation Sidebar -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+    <div class="mobile-nav" id="mobileNav">
+      <a href="#features" onclick="closeMobileNav()">Features</a>
+      <button onclick="window.location.href = '/login.html'; closeMobileNav()">
+        <i class="fas fa-sign-in-alt"></i> Sign In
+      </button>
+      <button onclick="window.location.href = '/developer-auth.html'; closeMobileNav()">
+        <i class="fas fa-code"></i> Developer
+      </button>
+      <div class="theme-mobile">
+        <div style="font-size: 14px; margin-bottom: 12px; opacity: 0.8;">Theme</div>
+        <div class="mobile-theme-options">
+          <button onclick="setThemeMode('device'); closeMobileNav()"><i class="fas fa-mobile-alt"></i> Device</button>
+          <button onclick="setThemeMode('light'); closeMobileNav()"><i class="fas fa-sun"></i> Light</button>
+          <button onclick="setThemeMode('dark'); closeMobileNav()"><i class="fas fa-moon"></i> Dark</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Header with Fixed Position -->
     <div class="navbar">
       <div class="logo" onclick="window.location.href = '/'">
@@ -667,15 +879,17 @@
         const themeIcon = document.getElementById("themeIcon");
         const themeText = document.getElementById("themeText");
 
-        if (currentThemeMode === "device") {
-          themeIcon.className = "fas fa-mobile-alt";
-          themeText.textContent = "Device";
-        } else if (currentThemeMode === "light") {
-          themeIcon.className = "fas fa-sun";
-          themeText.textContent = "Light";
-        } else {
-          themeIcon.className = "fas fa-moon";
-          themeText.textContent = "Dark";
+        if (themeIcon && themeText) {
+          if (currentThemeMode === "device") {
+            themeIcon.className = "fas fa-mobile-alt";
+            themeText.textContent = "Device";
+          } else if (currentThemeMode === "light") {
+            themeIcon.className = "fas fa-sun";
+            themeText.textContent = "Light";
+          } else {
+            themeIcon.className = "fas fa-moon";
+            themeText.textContent = "Dark";
+          }
         }
 
         document.querySelectorAll(".theme-option").forEach((opt) => {
@@ -694,13 +908,14 @@
 
       function toggleThemeDropdown() {
         const dropdown = document.getElementById("themeDropdown");
-        dropdown.classList.toggle("show");
+        if (dropdown) dropdown.classList.toggle("show");
       }
 
       document.addEventListener("click", function (event) {
         const container = document.querySelector(".theme-dropdown-container");
-        if (container && !container.contains(event.target)) {
-          document.getElementById("themeDropdown").classList.remove("show");
+        const dropdown = document.getElementById("themeDropdown");
+        if (container && dropdown && !container.contains(event.target)) {
+          dropdown.classList.remove("show");
         }
       });
 
@@ -714,6 +929,38 @@
         });
 
       applyTheme(currentThemeMode);
+      
+      // Mobile Navigation Functions
+      const mobileBtn = document.getElementById('mobileMenuBtn');
+      const mobileNav = document.getElementById('mobileNav');
+      const mobileOverlay = document.getElementById('mobileNavOverlay');
+      
+      function openMobileNav() {
+        mobileNav.classList.add('open');
+        mobileOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+      
+      function closeMobileNav() {
+        mobileNav.classList.remove('open');
+        mobileOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+      
+      if (mobileBtn) {
+        mobileBtn.addEventListener('click', openMobileNav);
+      }
+      
+      if (mobileOverlay) {
+        mobileOverlay.addEventListener('click', closeMobileNav);
+      }
+      
+      // Close mobile nav on window resize if open
+      window.addEventListener('resize', function() {
+        if (window.innerWidth > 768 && mobileNav.classList.contains('open')) {
+          closeMobileNav();
+        }
+      });
     </script>
   </body>
 </html>

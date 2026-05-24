@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Developer Portal | API Gateway</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -49,6 +49,89 @@
             background: var(--light);
             color: var(--text);
             transition: all 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        /* ===== HAMBURGER MENU (Mobile Only) ===== */
+        .mobile-menu-btn {
+            position: fixed;
+            top: 16px;
+            left: 20px;
+            z-index: 1100;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 44px;
+            height: 44px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--text);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        
+        .mobile-menu-btn:hover {
+            background: var(--border);
+        }
+        
+        /* Mobile Sidebar Navigation */
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 280px;
+            height: 100vh;
+            background: var(--dark);
+            backdrop-filter: blur(20px);
+            z-index: 1050;
+            padding: 80px 24px 24px;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            border-left: 1px solid rgba(255,255,255,0.1);
+            box-shadow: -4px 0 20px rgba(0,0,0,0.2);
+        }
+        
+        .mobile-nav.open {
+            right: 0;
+        }
+        
+        .mobile-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1040;
+            display: none;
+        }
+        
+        .mobile-nav-overlay.active {
+            display: block;
+        }
+        
+        .mobile-nav .mobile-nav-item {
+            padding: 14px 16px;
+            width: 100%;
+            text-align: left;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        
+        .mobile-nav .mobile-nav-item:hover {
+            background: var(--primary);
         }
 
         .bg-gradient {
@@ -74,6 +157,34 @@
             top: 0;
             z-index: 100;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Mobile header adjustments */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+                justify-content: flex-end;
+            }
+            .logo {
+                margin-right: auto;
+                margin-left: 50px;
+            }
+            .mobile-menu-btn {
+                display: flex;
+            }
+            .user-menu .settings-icon span,
+            .user-menu .logout-btn span {
+                display: none;
+            }
+            .user-menu .settings-icon {
+                padding: 8px 12px;
+            }
+            .user-menu .logout-btn {
+                padding: 8px 12px;
+            }
+            .profile-name {
+                display: none;
+            }
         }
 
         .logo {
@@ -193,6 +304,12 @@
             padding: 32px 32px;
         }
 
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+            }
+        }
+
         .welcome-card {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             border-radius: 28px;
@@ -228,11 +345,36 @@
             position: relative;
         }
 
+        @media (max-width: 768px) {
+            .welcome-card {
+                padding: 32px 24px;
+            }
+            .welcome-card h1 {
+                font-size: 24px;
+            }
+            .welcome-card p {
+                font-size: 14px;
+            }
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 24px;
             margin-bottom: 40px;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         .stat-card {
@@ -283,6 +425,22 @@
             margin-bottom: 8px;
         }
 
+        @media (max-width: 480px) {
+            .stat-card {
+                padding: 16px;
+            }
+            .stat-value {
+                font-size: 28px;
+            }
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+            }
+            .stat-icon i {
+                font-size: 20px;
+            }
+        }
+
         .stat-label {
             font-size: 14px;
             color: var(--text-light);
@@ -300,6 +458,12 @@
 
         .card:hover {
             box-shadow: 0 8px 24px -12px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 20px;
+            }
         }
 
         .card h2 {
@@ -320,6 +484,15 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .request-form {
+                grid-template-columns: 1fr;
+            }
+            .full-width {
+                grid-column: span 1;
+            }
         }
 
         .request-form input,
@@ -376,6 +549,19 @@
             border: 1px solid var(--border);
         }
 
+        @media (max-width: 768px) {
+            .tabs {
+                width: 100%;
+                justify-content: center;
+            }
+            .tab {
+                padding: 8px 16px;
+                font-size: 12px;
+                flex: 1;
+                text-align: center;
+            }
+        }
+
         .tab {
             padding: 10px 28px;
             cursor: pointer;
@@ -409,6 +595,13 @@
             font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 768px) {
+            th, td {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
         }
 
         .method-badge {
@@ -471,6 +664,16 @@
             gap: 12px;
             margin-bottom: 24px;
             flex-wrap: wrap;
+        }
+
+        @media (max-width: 480px) {
+            .filter-buttons {
+                gap: 8px;
+            }
+            .filter-btn {
+                padding: 6px 14px;
+                font-size: 11px;
+            }
         }
 
         .filter-btn {
@@ -539,6 +742,14 @@
             border: 1px solid var(--border);
         }
 
+        @media (max-width: 480px) {
+            .settings-container {
+                margin: 16px;
+                padding: 24px;
+                width: calc(100% - 32px);
+            }
+        }
+
         @keyframes modalSlideUp {
             from { transform: translateY(30px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -578,6 +789,14 @@
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
+        }
+
+        @media (max-width: 480px) {
+            .avatar-preview {
+                width: 90px;
+                height: 90px;
+                font-size: 36px;
+            }
         }
 
         .avatar-preview:hover {
@@ -690,50 +909,31 @@
             margin-top: 8px;
         }
 
-        @media (max-width: 1024px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            .request-form {
-                grid-template-columns: 1fr;
-            }
-            .full-width {
-                grid-column: span 1;
-            }
-            .welcome-card h1 {
-                font-size: 24px;
-            }
-            .logo-text {
-                display: none;
-            }
-            .profile-name {
-                display: none;
-            }
-            .settings-container {
-                margin: 20px;
-                padding: 24px;
-            }
-            .tabs {
-                width: 100%;
-                justify-content: center;
-            }
-            .tab {
-                padding: 8px 16px;
-                font-size: 12px;
+        /* Touch-friendly adjustments */
+        @media (hover: none) {
+            .stat-card:active, .btn-submit:active, .filter-btn:active, .tab:active {
+                transform: scale(0.98);
             }
         }
     </style>
 </head>
 <body>
+    <!-- Hamburger Menu Button -->
+    <div class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i>
+    </div>
+    
+    <!-- Mobile Navigation Sidebar -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+    <div class="mobile-nav" id="mobileNav">
+        <button class="mobile-nav-item" onclick="openSettings(); closeMobileNav()">
+            <i class="fas fa-cog"></i> Settings
+        </button>
+        <button class="mobile-nav-item" onclick="logout(); closeMobileNav()">
+            <i class="fas fa-sign-out-alt"></i> Exit
+        </button>
+    </div>
+
     <div class="bg-gradient"></div>
 
     <div class="header">
@@ -815,7 +1015,7 @@
                     <button class="filter-btn" onclick="filterByMethod('DELETE')">DELETE</button>
                 </div>
                 <div style="overflow-x: auto;">
-                    <table>
+                    <table style="min-width: 400px;">
                         <thead>
                             <tr>
                                 <th>Method</th>
@@ -823,7 +1023,8 @@
                                 <th>Rate Limit</th>
                             </tr>
                         </thead>
-                        <tbody id="routesList"><tr><td colspan="3" style="text-align: center;">Loading...</td></tr></tbody>
+                        <tbody id="routesList"><tr><td colspan="3" style="text-align: center;">Loading...</td></tr>
+                    </tbody>
                     </table>
                 </div>
             </div>
@@ -832,7 +1033,7 @@
         <div id="requestsTab" style="display: none;">
             <div class="card">
                 <div style="overflow-x: auto;">
-                    <table>
+                    <table style="min-width: 500px;">
                         <thead>
                             <tr>
                                 <th>Path</th>
@@ -842,7 +1043,8 @@
                                 <th>Submitted</th>
                             </tr>
                         </thead>
-                        <tbody id="myRequestsList"><tr><td colspan="5" style="text-align: center;">Loading...</td></tr></tbody>
+                        <tbody id="myRequestsList"><tr><td colspan="5" style="text-align: center;">Loading...</td></tr>
+                    </tbody>
                     </table>
                 </div>
             </div>
@@ -911,6 +1113,38 @@
         let currentFilter = 'all';
         let userPhoto = null;
 
+        // Mobile Navigation Functions
+        const mobileBtn = document.getElementById('mobileMenuBtn');
+        const mobileNav = document.getElementById('mobileNav');
+        const mobileOverlay = document.getElementById('mobileNavOverlay');
+        
+        function openMobileNav() {
+            mobileNav.classList.add('open');
+            mobileOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeMobileNav() {
+            mobileNav.classList.remove('open');
+            mobileOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        if (mobileBtn) {
+            mobileBtn.addEventListener('click', openMobileNav);
+        }
+        
+        if (mobileOverlay) {
+            mobileOverlay.addEventListener('click', closeMobileNav);
+        }
+        
+        // Close mobile nav on window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768 && mobileNav.classList.contains('open')) {
+                closeMobileNav();
+            }
+        });
+
         // Check authentication via cookie
         
         async function checkAuth() {
@@ -960,6 +1194,7 @@
             document.getElementById('settingsWebsite').value = currentUser.website || '';
             document.getElementById('settingsLocation').value = currentUser.location || '';
             document.getElementById('settingsBio').value = currentUser.bio || '';
+            closeMobileNav();
         }
 
         function closeSettings() {
@@ -1139,7 +1374,7 @@
             filtered.forEach(r => {
                 html += `<tr>
                     <td><span class="method-badge">${r.method}</span></td>
-                    <td><code style="font-family: monospace;">${r.path_pattern}</code></td>
+                    <td><code style="font-family: monospace; word-break: break-all;">${r.path_pattern}</code></td>
                     <td>${r.rate_limit_per_minute || 100}/min</td>
                 </tr>`;
             });
@@ -1157,11 +1392,11 @@
                 let statusText = r.status === 'pending' ? '⏳ Pending' : (r.status === 'approved' ? '✅ Approved' : '❌ Rejected');
                 let statusClass = r.status === 'pending' ? 'badge-pending' : (r.status === 'approved' ? 'badge-approved' : 'badge-rejected');
                 html += `<tr>
-                    <td><code style="font-family: monospace;">${r.path_pattern}</code></td>
+                    <td><code style="font-family: monospace; word-break: break-all;">${r.path_pattern}</code></td>
                     <td><span class="method-badge">${r.method}</span></td>
                     <td><span class="${statusClass}">${statusText}</span></td>
-                    <td>${r.reason || '-'}</td>
-                    <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                    <td style="max-width: 200px; word-break: break-word;">${r.reason || '-'}</td>
+                    <td style="white-space: nowrap;">${new Date(r.created_at).toLocaleDateString()}</td>
                 </tr>`;
             });
             tbody.innerHTML = html;
@@ -1225,15 +1460,14 @@
         }
 
         // Initialize - check auth and load data
-      // Initialize
-(async function init() {
-    const user = await checkAuth();
-    if (user) {
-        currentUser = user;
-        await loadUserData();
-        await loadDashboard();
-    }
-})();
+        (async function init() {
+            const user = await checkAuth();
+            if (user) {
+                currentUser = user;
+                await loadUserData();
+                await loadDashboard();
+            }
+        })();
     </script>
 </body>
 </html>

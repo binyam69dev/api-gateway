@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Developer Sign In | API Gateway</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -16,162 +17,271 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
         }
+        
+        /* Animated background effect - modern touch */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%);
+            animation: floatBg 20s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes floatBg {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-2%, -1%) rotate(1deg); }
+            66% { transform: translate(1%, 2%) rotate(-1deg); }
+        }
+        
         .card {
-            background: white;
-            border-radius: 32px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(0px);
+            border-radius: 40px;
             width: 100%;
-            max-width: 480px;
+            max-width: 500px;
             padding: 48px 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            animation: slideUp 0.5s ease-out;
+            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.2);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 40px 70px -20px rgba(0, 0, 0, 0.5);
+        }
+        
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(40px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
+        
         .logo {
-            width: 64px;
-            height: 64px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            border-radius: 20px;
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed, #a855f7);
+            background-size: 200% 200%;
+            border-radius: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 20px;
-            font-size: 28px;
+            font-size: 32px;
             color: white;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+            animation: gradientShift 4s ease infinite;
         }
-        .logo:hover { transform: scale(1.05); }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .logo:hover { 
+            transform: scale(1.08) rotate(2deg);
+            box-shadow: 0 15px 35px -8px rgba(79, 70, 229, 0.5);
+        }
+        
         h1 {
             text-align: center;
-            font-size: 32px;
+            font-size: 34px;
             font-weight: 800;
             margin-bottom: 8px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            background: linear-gradient(135deg, #4f46e5, #7c3aed, #a855f7);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
         }
+        
         .subtitle {
             text-align: center;
             color: #64748b;
             margin-bottom: 32px;
+            font-size: 15px;
+            font-weight: 500;
         }
+        
         .tabs {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             background: #f1f5f9;
-            padding: 5px;
-            border-radius: 16px;
-            margin-bottom: 28px;
+            padding: 6px;
+            border-radius: 60px;
+            margin-bottom: 32px;
         }
+        
         .tab {
             flex: 1;
-            padding: 12px;
+            padding: 12px 8px;
             text-align: center;
             cursor: pointer;
-            border-radius: 12px;
-            font-weight: 600;
+            border-radius: 40px;
+            font-weight: 700;
             background: none;
             border: none;
             color: #64748b;
-            transition: all 0.3s;
+            transition: all 0.25s ease;
+            font-size: 14px;
+            letter-spacing: -0.2px;
         }
+        
         .tab.active {
             background: white;
             color: #4f46e5;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
-        .form-group { margin-bottom: 20px; }
+        
+        .tab:hover:not(.active) {
+            background: rgba(255,255,255,0.6);
+            color: #4f46e5;
+        }
+        
+        .form-group { margin-bottom: 22px; }
+        
         label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             color: #1e293b;
+            letter-spacing: -0.2px;
         }
-        .input-group { position: relative; }
+        
+        .input-group { 
+            position: relative;
+            transition: all 0.2s;
+        }
+        
         .input-group i {
             position: absolute;
             left: 16px;
             top: 50%;
             transform: translateY(-50%);
             color: #94a3b8;
+            font-size: 16px;
+            transition: color 0.2s;
+            pointer-events: none;
         }
+        
         input {
             width: 100%;
-            padding: 14px 16px 14px 48px;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 14px;
+            padding: 15px 16px 15px 48px;
+            border: 2px solid #e2e8f0;
+            border-radius: 20px;
             font-size: 14px;
-            transition: all 0.2s;
+            font-weight: 500;
+            transition: all 0.25s;
+            background: white;
+            font-family: 'Inter', sans-serif;
         }
+        
         input:focus {
             outline: none;
             border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
         }
+        
+        input:hover:not(:focus) {
+            border-color: #cbd5e1;
+        }
+        
         .username-hint {
             font-size: 11px;
             color: #64748b;
-            margin-top: 5px;
+            margin-top: 6px;
             display: block;
+            letter-spacing: -0.2px;
         }
+        
         .error-message {
             font-size: 12px;
             color: #ef4444;
             margin-top: 5px;
             display: none;
+            font-weight: 500;
         }
+        
         .password-strength {
-            margin-top: 8px;
-            margin-bottom: 0;
+            margin-top: 10px;
         }
+        
         .strength-bar {
-            height: 4px;
+            height: 5px;
             background: #e2e8f0;
-            border-radius: 4px;
-            transition: all 0.3s;
+            border-radius: 10px;
+            transition: all 0.3s ease;
             width: 0%;
         }
-        .strength-bar.weak { background: #ef4444; width: 25%; }
+        
+        .strength-bar.weak { background: #ef4444; width: 25%; box-shadow: 0 0 6px rgba(239,68,68,0.3); }
         .strength-bar.fair { background: #f59e0b; width: 50%; }
         .strength-bar.good { background: #3b82f6; width: 75%; }
-        .strength-bar.strong { background: #10b981; width: 100%; }
+        .strength-bar.strong { background: #10b981; width: 100%; box-shadow: 0 0 8px rgba(16,185,129,0.4); }
+        
         .strength-text {
             font-size: 11px;
-            margin-top: 4px;
+            margin-top: 6px;
             display: block;
+            font-weight: 500;
         }
+        
         .strength-text.weak { color: #ef4444; }
         .strength-text.fair { color: #f59e0b; }
         .strength-text.good { color: #3b82f6; }
         .strength-text.strong { color: #10b981; }
+        
         button {
             width: 100%;
-            padding: 14px;
-            background: #4f46e5;
+            padding: 15px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
             color: white;
             border: none;
-            border-radius: 14px;
-            font-weight: 600;
+            border-radius: 40px;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s ease;
             font-size: 16px;
+            letter-spacing: -0.2px;
+            position: relative;
+            overflow: hidden;
         }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        button:hover::before {
+            left: 100%;
+        }
+        
         button:hover {
-            background: #4338ca;
+            background: linear-gradient(135deg, #4338ca, #6d28d9);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.5);
         }
-        button:active { transform: translateY(0); }
+        
+        button:active { transform: translateY(1px); }
+        
         .divider {
             text-align: center;
-            margin: 28px 0;
+            margin: 32px 0 24px;
             position: relative;
         }
+        
         .divider::before, .divider::after {
             content: "";
             position: absolute;
@@ -180,90 +290,163 @@
             height: 1px;
             background: #e2e8f0;
         }
+        
         .divider::before { left: 0; }
         .divider::after { right: 0; }
+        
         .divider span {
             background: white;
-            padding: 0 14px;
+            padding: 0 16px;
             color: #64748b;
             font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+        
         .social-buttons {
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
+        
         .social-btn {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
-            padding: 12px;
-            border-radius: 14px;
+            padding: 13px;
+            border-radius: 40px;
             cursor: pointer;
-            font-weight: 500;
-            border: 1.5px solid #e2e8f0;
+            font-weight: 600;
+            border: 2px solid #e2e8f0;
             background: white;
-            transition: all 0.3s;
+            transition: all 0.25s ease;
             font-size: 14px;
             color: #1e293b;
         }
-        .social-btn i { font-size: 20px; }
-        .social-btn.google:hover { background: #db4437; color: white; border-color: #db4437; }
-        .social-btn.github:hover { background: #24292f; color: white; border-color: #24292f; }
-        .social-btn.facebook:hover { background: #1877f2; color: white; border-color: #1877f2; }
+        
+        .social-btn i { font-size: 20px; transition: transform 0.2s; }
+        
+        .social-btn:hover i { transform: scale(1.1); }
+        
+        .social-btn.google:hover { background: #db4437; color: white; border-color: #db4437; transform: translateY(-2px); box-shadow: 0 8px 20px -8px #db4437; }
+        .social-btn.github:hover { background: #24292f; color: white; border-color: #24292f; transform: translateY(-2px); }
+        .social-btn.facebook:hover { background: #1877f2; color: white; border-color: #1877f2; transform: translateY(-2px); }
+        
         .message {
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+            padding: 14px 18px;
+            border-radius: 24px;
+            margin-bottom: 24px;
             font-size: 13px;
             display: none;
-            animation: slideDown 0.3s ease-out;
+            animation: slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            font-weight: 500;
+            backdrop-filter: blur(4px);
         }
+        
         @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
+            from { opacity: 0; transform: translateY(-12px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
         .message.error {
             background: #fee2e2;
             color: #991b1b;
             display: block;
-            border-left: 4px solid #991b1b;
+            border-left: 5px solid #991b1b;
         }
+        
         .message.success {
             background: #d1fae5;
             color: #065f46;
             display: block;
-            border-left: 4px solid #065f46;
+            border-left: 5px solid #065f46;
         }
+        
         .message.info {
             background: #dbeafe;
             color: #1e40af;
             display: block;
-            border-left: 4px solid #1e40af;
+            border-left: 5px solid #1e40af;
         }
+        
         .demo-info {
-            margin-top: 20px;
-            padding: 16px;
-            background: #f8fafc;
-            border-radius: 14px;
+            margin-top: 28px;
+            padding: 16px 20px;
+            background: rgba(248, 250, 252, 0.9);
+            border-radius: 24px;
             text-align: center;
-            font-size: 12px;
+            font-size: 13px;
             border: 1px solid #e2e8f0;
+            transition: all 0.2s;
         }
-        .demo-info strong { color: #4f46e5; }
-        .back-link { text-align: center; margin-top: 20px; }
+        
+        .demo-info:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+        
+        .demo-info i {
+            margin-right: 8px;
+            color: #a5b4fc;
+        }
+        
+        .demo-info strong { color: #4f46e5; font-weight: 700; }
+        
+        .back-link { text-align: center; margin-top: 24px; }
+        
         .back-link a {
             color: #4f46e5;
             text-decoration: none;
             cursor: pointer;
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
         }
-        .back-link a:hover { color: #4338ca; text-decoration: underline; }
-        @media (max-width: 480px) {
-            .card { padding: 32px 24px; }
+        
+        .back-link a:hover { 
+            color: #4338ca; 
+            gap: 10px;
+            text-decoration: underline;
+        }
+        
+        /* Enhanced responsive adjustments */
+        @media (max-width: 580px) {
+            .card { 
+                padding: 36px 24px; 
+                max-width: 94%;
+                border-radius: 32px;
+            }
             h1 { font-size: 28px; }
+            .subtitle { font-size: 13px; margin-bottom: 24px; }
+            .logo { width: 60px; height: 60px; font-size: 28px; border-radius: 20px; }
+            .tab { padding: 10px 6px; font-size: 13px; }
+            input { padding: 13px 16px 13px 44px; }
+            button { padding: 13px; font-size: 15px; }
+            .social-btn { padding: 11px; }
+        }
+        
+        @media (max-width: 420px) {
+            .card { padding: 28px 20px; }
+            .tabs { gap: 6px; }
+            .tab { font-size: 12px; }
+            .social-buttons { gap: 10px; }
+            .demo-info { padding: 12px 14px; font-size: 11px; }
+        }
+        
+        /* Smooth transitions for form switching */
+        #loginForm, #registerForm {
+            transition: opacity 0.2s ease;
+        }
+        
+        /* Focus visible for accessibility */
+        *:focus-visible {
+            outline: 2px solid #4f46e5;
+            outline-offset: 2px;
         }
     </style>
 </head>
@@ -287,13 +470,13 @@
             <div class="form-group">
                 <div class="input-group">
                     <i class="fas fa-envelope"></i>
-                    <input type="text" id="loginIdentifier" placeholder="Email or Username">
+                    <input type="text" id="loginIdentifier" placeholder="Email or Username" autocomplete="username">
                 </div>
             </div>
             <div class="form-group">
                 <div class="input-group">
                     <i class="fas fa-lock"></i>
-                    <input type="password" id="loginPassword" placeholder="Password">
+                    <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
                 </div>
             </div>
             <button onclick="doLogin()">Sign In</button>
@@ -304,13 +487,13 @@
             <div class="form-group">
                 <div class="input-group">
                     <i class="fas fa-user"></i>
-                    <input type="text" id="regFullName" placeholder="Full name">
+                    <input type="text" id="regFullName" placeholder="Full name" autocomplete="name">
                 </div>
             </div>
             <div class="form-group">
                 <div class="input-group">
                     <i class="fas fa-user-circle"></i>
-                    <input type="text" id="regUsername" placeholder="Username (3-30 chars)">
+                    <input type="text" id="regUsername" placeholder="Username (3-30 chars)" autocomplete="username">
                 </div>
                 <div class="username-hint">Letters, numbers, dots, underscores only</div>
                 <div id="usernameError" class="error-message"></div>
@@ -318,13 +501,13 @@
             <div class="form-group">
                 <div class="input-group">
                     <i class="fas fa-envelope"></i>
-                    <input type="email" id="regEmail" placeholder="Email address">
+                    <input type="email" id="regEmail" placeholder="Email address" autocomplete="email">
                 </div>
             </div>
             <div class="form-group">
                 <div class="input-group">
                     <i class="fas fa-lock"></i>
-                    <input type="password" id="regPassword" placeholder="Password (min 12 chars)">
+                    <input type="password" id="regPassword" placeholder="Password (min 12 chars)" autocomplete="new-password">
                 </div>
                 <div class="password-strength">
                     <div class="strength-bar" id="strengthBar"></div>
@@ -334,7 +517,7 @@
             <div class="form-group">
                 <div class="input-group">
                     <i class="fas fa-check-circle"></i>
-                    <input type="password" id="regConfirmPassword" placeholder="Confirm password">
+                    <input type="password" id="regConfirmPassword" placeholder="Confirm password" autocomplete="new-password">
                 </div>
             </div>
             <button onclick="doRegister()">Create Account</button>
@@ -354,11 +537,9 @@
             </button>
         </div>
 
-        <div class="demo-info">
-            <strong>📋 Demo Account</strong><br />
-            Email: <strong>developer@example.com</strong><br />
-            Username: <strong>developer</strong><br />
-            Password: <strong>Dev@2025#Portal</strong>
+        <div class="demo-info" style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 16px; text-align: center; margin-top: 24px;">
+            <i class="fas fa-envelope" style="margin-right: 8px; color: #a5b4fc"></i>
+            <span style="font-size: 13px">For access inquiries, please contact <strong>binyam.dev369@gmail.com</strong></span>
         </div>
 
         <div class="back-link">
@@ -473,57 +654,31 @@
                 showMessage("Please enter your full name", "error");
                 return;
             }
-            
-            if (!username) {
-                showMessage("Please choose a username", "error");
-                return;
-            }
-            if (username.length < 3) {
-                showMessage("Username must be at least 3 characters", "error");
-                return;
-            }
-            if (!/^[a-zA-Z0-9._]+$/.test(username)) {
-                showMessage("Username can only contain letters, numbers, dots, and underscores", "error");
-                return;
-            }
-            
             if (!email) {
                 showMessage("Please enter your email address", "error");
                 return;
             }
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                showMessage("Please enter a valid email address", "error");
-                return;
-            }
-            
             if (!password) {
                 showMessage("Please enter a password", "error");
                 return;
             }
-            if (password.length < 12) {
-                showMessage("Password must be at least 12 characters", "error");
-                return;
-            }
-            if (!/[A-Z]/.test(password)) {
-                showMessage("Password must contain at least 1 uppercase letter", "error");
-                return;
-            }
-            if (!/[a-z]/.test(password)) {
-                showMessage("Password must contain at least 1 lowercase letter", "error");
-                return;
-            }
-            if (!/[0-9]/.test(password)) {
-                showMessage("Password must contain at least 1 number", "error");
-                return;
-            }
-            if (!/[!@#$%^&*]/.test(password)) {
-                showMessage("Password must contain at least 1 special character (!@#$%^&*)", "error");
+            if (password.length < 8) {
+                showMessage("Password must be at least 8 characters", "error");
                 return;
             }
             if (password !== confirmPassword) {
                 showMessage("Passwords do not match", "error");
                 return;
+            }
+            
+            const requestBody = {
+                name: fullName,
+                email: email,
+                password: password
+            };
+            
+            if (username) {
+                requestBody.username = username;
             }
             
             const btn = document.querySelector("#registerForm button");
@@ -536,12 +691,7 @@
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include",
-                    body: JSON.stringify({ 
-                        name: fullName,
-                        username: username,
-                        email: email, 
-                        password: password 
-                    }),
+                    body: JSON.stringify(requestBody),
                 });
                 
                 const data = await res.json();
@@ -562,7 +712,7 @@
                         showMessage("You can now login with your new account!", "success");
                     }, 2000);
                 } else {
-                    showMessage(data.error || "Registration failed. Please try again.", "error");
+                    showMessage(data.error || "Registration failed", "error");
                 }
                 btn.textContent = originalText;
                 btn.disabled = false;
@@ -573,7 +723,7 @@
                 btn.disabled = false;
             }
         }
-
+        
         function socialLogin(provider) {
             if (provider === "google") {
                 window.location.href = `/auth/developer/google`;
@@ -597,7 +747,6 @@
             }
         }
 
-        // Password strength meter
         const passwordInput = document.getElementById("regPassword");
         if (passwordInput) {
             passwordInput.addEventListener("input", function(e) {
@@ -612,7 +761,6 @@
             });
         }
 
-        // Initialize
         checkAlreadyLoggedIn();
     </script>
 </body>
