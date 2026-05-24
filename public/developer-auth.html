@@ -42,7 +42,9 @@
             font-size: 28px;
             color: white;
             cursor: pointer;
+            transition: transform 0.2s;
         }
+        .logo:hover { transform: scale(1.05); }
         h1 {
             text-align: center;
             font-size: 32px;
@@ -82,12 +84,15 @@
             color: #4f46e5;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
-        .form-group {
-            margin-bottom: 20px;
+        .form-group { margin-bottom: 20px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #1e293b;
         }
-        .input-group {
-            position: relative;
-        }
+        .input-group { position: relative; }
         .input-group i {
             position: absolute;
             left: 16px;
@@ -108,6 +113,42 @@
             border-color: #4f46e5;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
+        .username-hint {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 5px;
+            display: block;
+        }
+        .error-message {
+            font-size: 12px;
+            color: #ef4444;
+            margin-top: 5px;
+            display: none;
+        }
+        .password-strength {
+            margin-top: 8px;
+            margin-bottom: 0;
+        }
+        .strength-bar {
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            transition: all 0.3s;
+            width: 0%;
+        }
+        .strength-bar.weak { background: #ef4444; width: 25%; }
+        .strength-bar.fair { background: #f59e0b; width: 50%; }
+        .strength-bar.good { background: #3b82f6; width: 75%; }
+        .strength-bar.strong { background: #10b981; width: 100%; }
+        .strength-text {
+            font-size: 11px;
+            margin-top: 4px;
+            display: block;
+        }
+        .strength-text.weak { color: #ef4444; }
+        .strength-text.fair { color: #f59e0b; }
+        .strength-text.good { color: #3b82f6; }
+        .strength-text.strong { color: #10b981; }
         button {
             width: 100%;
             padding: 14px;
@@ -123,14 +164,15 @@
         button:hover {
             background: #4338ca;
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
         }
+        button:active { transform: translateY(0); }
         .divider {
             text-align: center;
             margin: 28px 0;
             position: relative;
         }
-        .divider::before,
-        .divider::after {
+        .divider::before, .divider::after {
             content: "";
             position: absolute;
             top: 50%;
@@ -164,14 +206,12 @@
             background: white;
             transition: all 0.3s;
             font-size: 14px;
+            color: #1e293b;
         }
         .social-btn i { font-size: 20px; }
-        .social-btn.google { color: #db4437; border-color: #db4437; }
-        .social-btn.google:hover { background: #db4437; color: white; }
-        .social-btn.github { color: #24292f; border-color: #24292f; }
-        .social-btn.github:hover { background: #24292f; color: white; }
-        .social-btn.facebook { color: #1877f2; border-color: #1877f2; }
-        .social-btn.facebook:hover { background: #1877f2; color: white; }
+        .social-btn.google:hover { background: #db4437; color: white; border-color: #db4437; }
+        .social-btn.github:hover { background: #24292f; color: white; border-color: #24292f; }
+        .social-btn.facebook:hover { background: #1877f2; color: white; border-color: #1877f2; }
         .message {
             padding: 12px;
             border-radius: 12px;
@@ -196,6 +236,12 @@
             display: block;
             border-left: 4px solid #065f46;
         }
+        .message.info {
+            background: #dbeafe;
+            color: #1e40af;
+            display: block;
+            border-left: 4px solid #1e40af;
+        }
         .demo-info {
             margin-top: 20px;
             padding: 16px;
@@ -203,6 +249,7 @@
             border-radius: 14px;
             text-align: center;
             font-size: 12px;
+            border: 1px solid #e2e8f0;
         }
         .demo-info strong { color: #4f46e5; }
         .back-link { text-align: center; margin-top: 20px; }
@@ -211,7 +258,9 @@
             text-decoration: none;
             cursor: pointer;
             font-size: 13px;
+            font-weight: 500;
         }
+        .back-link a:hover { color: #4338ca; text-decoration: underline; }
         @media (max-width: 480px) {
             .card { padding: 32px 24px; }
             h1 { font-size: 28px; }
@@ -224,7 +273,7 @@
             <i class="fas fa-code"></i>
         </div>
         <h1>Developer Portal</h1>
-        <p class="subtitle">Sign in or create your account</p>
+        <p class="subtitle">Sign in or create your developer account</p>
 
         <div id="message" class="message"></div>
 
@@ -238,13 +287,13 @@
             <div class="form-group">
                 <div class="input-group">
                     <i class="fas fa-envelope"></i>
-                    <input type="email" id="loginEmail" placeholder="Email address" value="user@example.com">
+                    <input type="text" id="loginIdentifier" placeholder="Email or Username">
                 </div>
             </div>
             <div class="form-group">
                 <div class="input-group">
                     <i class="fas fa-lock"></i>
-                    <input type="password" id="loginPassword" placeholder="Password" value="user123">
+                    <input type="password" id="loginPassword" placeholder="Password">
                 </div>
             </div>
             <button onclick="doLogin()">Sign In</button>
@@ -255,8 +304,16 @@
             <div class="form-group">
                 <div class="input-group">
                     <i class="fas fa-user"></i>
-                    <input type="text" id="regName" placeholder="Full name">
+                    <input type="text" id="regFullName" placeholder="Full name">
                 </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <i class="fas fa-user-circle"></i>
+                    <input type="text" id="regUsername" placeholder="Username (3-30 chars)">
+                </div>
+                <div class="username-hint">Letters, numbers, dots, underscores only</div>
+                <div id="usernameError" class="error-message"></div>
             </div>
             <div class="form-group">
                 <div class="input-group">
@@ -267,7 +324,11 @@
             <div class="form-group">
                 <div class="input-group">
                     <i class="fas fa-lock"></i>
-                    <input type="password" id="regPassword" placeholder="Password (min 6 characters)">
+                    <input type="password" id="regPassword" placeholder="Password (min 12 chars)">
+                </div>
+                <div class="password-strength">
+                    <div class="strength-bar" id="strengthBar"></div>
+                    <span id="strengthText" class="strength-text"></span>
                 </div>
             </div>
             <div class="form-group">
@@ -295,8 +356,9 @@
 
         <div class="demo-info">
             <strong>📋 Demo Account</strong><br />
-            Email: <strong>user@example.com</strong><br />
-            Password: <strong>user123</strong>
+            Email: <strong>developer@example.com</strong><br />
+            Username: <strong>developer</strong><br />
+            Password: <strong>Dev@2025#Portal</strong>
         </div>
 
         <div class="back-link">
@@ -305,12 +367,32 @@
     </div>
 
     <script>
+        const API_URL = "";
+
+        function checkPasswordStrength(password) {
+            let score = 0;
+            if (password.length >= 12) score++;
+            if (password.length >= 16) score++;
+            if (/[A-Z]/.test(password)) score++;
+            if (/[a-z]/.test(password)) score++;
+            if (/[0-9]/.test(password)) score++;
+            if (/[!@#$%^&*]/.test(password)) score++;
+            
+            if (score <= 2) return { text: 'Very Weak', class: 'weak' };
+            if (score <= 3) return { text: 'Weak', class: 'weak' };
+            if (score <= 4) return { text: 'Fair', class: 'fair' };
+            if (score <= 5) return { text: 'Good', class: 'good' };
+            return { text: 'Strong', class: 'strong' };
+        }
+
         function showMessage(msg, type) {
             const el = document.getElementById("message");
             el.textContent = msg;
             el.className = `message ${type}`;
+            el.style.display = "block";
             setTimeout(() => {
                 el.style.display = "none";
+                el.className = "message";
             }, 5000);
         }
 
@@ -333,58 +415,75 @@
             }
         }
 
-       // In developer-auth.html, update the login success handler
-async function doLogin() {
-    const email = document.getElementById("loginEmail").value.trim();
-    const password = document.getElementById("loginPassword").value;
-    
-    if (!email || !password) {
-        showMessage("Please enter email and password", "error");
-        return;
-    }
-    
-    const btn = document.querySelector("#loginForm button");
-    const originalText = btn.textContent;
-    btn.textContent = "Signing in...";
-    btn.disabled = true;
-    
-    try {
-        const res = await fetch(`/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ email, password }),
-        });
-        
-        const data = await res.json();
-        
-        if (res.ok && data.message === "Login successful") {
-            showMessage("Login successful! Redirecting...", "success");
-            setTimeout(() => {
-                // Always redirect to developer dashboard
-                window.location.href = "/developer-dashboard.html";
-            }, 1500);
-        } else {
-            showMessage(data.error || "Invalid credentials", "error");
-            btn.textContent = originalText;
-            btn.disabled = false;
+        async function doLogin() {
+            const identifier = document.getElementById("loginIdentifier").value.trim();
+            const password = document.getElementById("loginPassword").value;
+            
+            if (!identifier || !password) {
+                showMessage("Please enter email/username and password", "error");
+                return;
+            }
+            
+            const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
+            const loginData = isEmail 
+                ? { email: identifier, password: password }
+                : { username: identifier, password: password };
+            
+            const btn = document.querySelector("#loginForm button");
+            const originalText = btn.textContent;
+            btn.textContent = "Signing in...";
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch(`/auth/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify(loginData),
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok && (data.token || data.message === "Login successful")) {
+                    showMessage("Login successful! Redirecting...", "success");
+                    setTimeout(() => {
+                        window.location.href = "/developer-dashboard.html";
+                    }, 1500);
+                } else {
+                    showMessage(data.error || "Invalid credentials", "error");
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                console.error("Login error:", err);
+                showMessage("Connection error. Please try again.", "error");
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
         }
-    } catch (err) {
-        console.error("Login error:", err);
-        showMessage("Connection error. Please try again.", "error");
-        btn.textContent = originalText;
-        btn.disabled = false;
-    }
-}
+
         async function doRegister() {
-            const name = document.getElementById("regName").value.trim();
+            const fullName = document.getElementById("regFullName").value.trim();
+            const username = document.getElementById("regUsername").value.trim();
             const email = document.getElementById("regEmail").value.trim();
             const password = document.getElementById("regPassword").value;
             const confirmPassword = document.getElementById("regConfirmPassword").value;
             
-            // Validation
-            if (!name) {
+            if (!fullName) {
                 showMessage("Please enter your full name", "error");
+                return;
+            }
+            
+            if (!username) {
+                showMessage("Please choose a username", "error");
+                return;
+            }
+            if (username.length < 3) {
+                showMessage("Username must be at least 3 characters", "error");
+                return;
+            }
+            if (!/^[a-zA-Z0-9._]+$/.test(username)) {
+                showMessage("Username can only contain letters, numbers, dots, and underscores", "error");
                 return;
             }
             
@@ -392,7 +491,6 @@ async function doLogin() {
                 showMessage("Please enter your email address", "error");
                 return;
             }
-            
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 showMessage("Please enter a valid email address", "error");
@@ -403,12 +501,26 @@ async function doLogin() {
                 showMessage("Please enter a password", "error");
                 return;
             }
-            
-            if (password.length < 6) {
-                showMessage("Password must be at least 6 characters", "error");
+            if (password.length < 12) {
+                showMessage("Password must be at least 12 characters", "error");
                 return;
             }
-            
+            if (!/[A-Z]/.test(password)) {
+                showMessage("Password must contain at least 1 uppercase letter", "error");
+                return;
+            }
+            if (!/[a-z]/.test(password)) {
+                showMessage("Password must contain at least 1 lowercase letter", "error");
+                return;
+            }
+            if (!/[0-9]/.test(password)) {
+                showMessage("Password must contain at least 1 number", "error");
+                return;
+            }
+            if (!/[!@#$%^&*]/.test(password)) {
+                showMessage("Password must contain at least 1 special character (!@#$%^&*)", "error");
+                return;
+            }
             if (password !== confirmPassword) {
                 showMessage("Passwords do not match", "error");
                 return;
@@ -425,7 +537,8 @@ async function doLogin() {
                     headers: { "Content-Type": "application/json" },
                     credentials: "include",
                     body: JSON.stringify({ 
-                        name: name, 
+                        name: fullName,
+                        username: username,
                         email: email, 
                         password: password 
                     }),
@@ -436,16 +549,15 @@ async function doLogin() {
                 if (res.status === 201 || res.ok) {
                     showMessage("Account created successfully! Please login.", "success");
                     
-                    // Clear form
-                    document.getElementById("regName").value = "";
+                    document.getElementById("regFullName").value = "";
+                    document.getElementById("regUsername").value = "";
                     document.getElementById("regEmail").value = "";
                     document.getElementById("regPassword").value = "";
                     document.getElementById("regConfirmPassword").value = "";
                     
-                    // Switch to login tab after 2 seconds
                     setTimeout(() => {
                         showTab("login");
-                        document.getElementById("loginEmail").value = email;
+                        document.getElementById("loginIdentifier").value = email;
                         document.getElementById("loginPassword").value = "";
                         showMessage("You can now login with your new account!", "success");
                     }, 2000);
@@ -472,20 +584,34 @@ async function doLogin() {
             }
         }
 
-      // Check if already logged in
-async function checkAlreadyLoggedIn() {
-    try {
-        const res = await fetch(`/auth/profile`, {
-            credentials: "include"
-        });
-        if (res.ok) {
-            // Already logged in, go to developer dashboard
-            window.location.href = "/developer-dashboard.html";
+        async function checkAlreadyLoggedIn() {
+            try {
+                const res = await fetch(`/auth/profile`, {
+                    credentials: "include"
+                });
+                if (res.ok) {
+                    window.location.href = "/developer-dashboard.html";
+                }
+            } catch (err) {
+                // Not logged in, stay on page
+            }
         }
-    } catch (err) {
-        // Not logged in, stay on page
-    }
-}
+
+        // Password strength meter
+        const passwordInput = document.getElementById("regPassword");
+        if (passwordInput) {
+            passwordInput.addEventListener("input", function(e) {
+                const strength = checkPasswordStrength(e.target.value);
+                const bar = document.getElementById("strengthBar");
+                const text = document.getElementById("strengthText");
+                if (bar) bar.className = `strength-bar ${strength.class}`;
+                if (text) {
+                    text.className = `strength-text ${strength.class}`;
+                    text.textContent = `Password Strength: ${strength.text}`;
+                }
+            });
+        }
+
         // Initialize
         checkAlreadyLoggedIn();
     </script>
