@@ -130,14 +130,15 @@ app.use(cookieParser());
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // ============ DEBUG ENDPOINT - Remove in production ============
-app.get("/debug/cookies", (req, res) => {
-  res.json({
-    cookies: req.cookies,
-    cookieNames: Object.keys(req.cookies || {}),
-    hasCookies: !!req.headers.cookie,
-    cookieHeader: req.headers.cookie || "none",
-  });
-});
+// app.get("/debug/cookies", (req, res) => {
+//   res.json({
+//     cookies: req.cookies,
+//     cookieNames: Object.keys(req.cookies || {}),
+//     hasCookies: !!req.headers.cookie,
+//     cookieHeader: req.headers.cookie || "none",
+//   });
+// });
+
 
 // ============ EXPRESS RATE LIMITING ============
 const authLimiter = expressRateLimit({
@@ -479,13 +480,22 @@ app.post("/auth/login", authLimiter, async (req, res) => {
         [user.id, refreshToken, expiresAt],
       );
     }
+    // for development 
 
+    // const cookieOptions = {
+    //   httpOnly: false,
+    //   secure: false,
+    //   sameSite: "lax",
+    //   path: "/",
+    // };
+    
+    //======for production======
     const cookieOptions = {
-      httpOnly: false,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
-    };
+  httpOnly: true,      
+  secure: true,        
+  sameSite: "strict",  
+  path: "/",
+};
 
     res.cookie("adminToken", accessToken, {
       ...cookieOptions,
