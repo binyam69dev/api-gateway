@@ -8,6 +8,14 @@ const cookieParser = require("cookie-parser");
 const expressRateLimit = require("express-rate-limit");
 const bcrypt = require("bcryptjs");
 
+// ============ COOKIE CONFIGURATION (FROM .env) ============
+const cookieOptions = {
+  httpOnly: process.env.COOKIE_HTTP_ONLY,
+  secure: process.env.COOKIE_SECURE,
+  sameSite: process.env.COOKIE_SAME_SITE,
+  path: "/",
+};
+
 // ============ IMPORT CUSTOM MIDDLEWARES ============
 const {
   authMiddleware,
@@ -26,17 +34,6 @@ const {
 } = require("./middlewares/rateLimit.middleware");
 
 const app = express();
-
-// // ============ HTTPS ENFORCEMENT ============
-// app.use((req, res, next) => {
-//   if (
-//     process.env.NODE_ENV === "production" &&
-//     req.headers["x-forwarded-proto"] !== "https"
-//   ) {
-//     return res.redirect(301, "https://" + req.headers.host + req.url);
-//   }
-//   next();
-// });
 
 // ============ CORS ============
 app.use(
@@ -128,17 +125,6 @@ app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
-
-// ============ DEBUG ENDPOINT - Remove in production ============
-// app.get("/debug/cookies", (req, res) => {
-//   res.json({
-//     cookies: req.cookies,
-//     cookieNames: Object.keys(req.cookies || {}),
-//     hasCookies: !!req.headers.cookie,
-//     cookieHeader: req.headers.cookie || "none",
-//   });
-// });
-
 
 // ============ EXPRESS RATE LIMITING ============
 const authLimiter = expressRateLimit({
@@ -480,22 +466,6 @@ app.post("/auth/login", authLimiter, async (req, res) => {
         [user.id, refreshToken, expiresAt],
       );
     }
-    // for development 
-
-    // const cookieOptions = {
-    //   httpOnly: false,
-    //   secure: false,
-    //   sameSite: "lax",
-    //   path: "/",
-    // };
-    
-    //======for production======
-    const cookieOptions = {
-  httpOnly: true,      
-  secure: true,        
-  sameSite: "strict",  
-  path: "/",
-};
 
     res.cookie("adminToken", accessToken, {
       ...cookieOptions,
@@ -526,11 +496,11 @@ app.post("/auth/login", authLimiter, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 // ============ REGISTER ENDPOINT ============
 app.post("/auth/register", authLimiter, async (req, res) => {
   const { email, password, name, username } = req.body;
 
-  // Validation
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password required" });
   }
@@ -549,7 +519,6 @@ app.post("/auth/register", authLimiter, async (req, res) => {
   try {
     const { pool } = require("./config/database");
 
-    // Check if email already exists
     const existingUser = await pool.query(
       "SELECT id FROM users WHERE email = $1",
       [email.toLowerCase()],
@@ -558,10 +527,8 @@ app.post("/auth/register", authLimiter, async (req, res) => {
       return res.status(400).json({ error: "Email already registered" });
     }
 
-    // Generate username from email if not provided
     let finalUsername = username || email.split("@")[0];
 
-    // Check if username exists and make unique if needed
     let usernameExists = await pool.query(
       "SELECT id FROM users WHERE username = $1",
       [finalUsername],
@@ -576,11 +543,9 @@ app.post("/auth/register", authLimiter, async (req, res) => {
       counter++;
     }
 
-    // Hash password
     const saltRounds = process.env.NODE_ENV === "production" ? 12 : 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Insert new user (username is optional, will be set to NULL if not provided)
     const result = await pool.query(
       `INSERT INTO users (email, password_hash, name, username, role, created_at, is_verified) 
        VALUES ($1, $2, $3, $4, $5, NOW(), $6) 
@@ -637,6 +602,7 @@ app.post("/auth/check-email", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 // ============ CONFIG ENDPOINTS ============
 app.get("/api/config/google", (req, res) => {
   res.json({ clientId: process.env.GOOGLE_CLIENT_ID });
@@ -679,10 +645,11 @@ app.get("/portal/my-requests", authMiddleware, async (req, res) => {
     );
     res.json({ requests: result.rows });
   } catch (err) {
-    console.error("Database error:", err);  // ← Log the actual error
+    console.error("Database error:", err);
     res.status(500).json({ error: "Server error", details: err.message });
   }
 });
+
 app.post("/portal/request-route", authMiddleware, async (req, res) => {
   try {
     const decoded = req.user;
@@ -697,7 +664,7 @@ app.post("/portal/request-route", authMiddleware, async (req, res) => {
     
     res.json({ message: "Request submitted successfully" });
   } catch (err) {
-    console.error("Error submitting request:", err);  // ← Log the real error
+    console.error("Error submitting request:", err);
     res.status(500).json({ error: "Server error", details: err.message });
   }
 });
@@ -753,12 +720,6 @@ app.post("/auth/google", async (req, res) => {
       { expiresIn: "24h" },
     );
 
-    // const cookieOptions = {
-    //   httpOnly: false,
-    //   secure: false,
-    //   sameSite: "lax",
-    //   path: "/",
-    // };
     res.cookie("adminToken", authToken, {
       ...cookieOptions,
       maxAge: 60 * 60 * 1000,
@@ -792,12 +753,6 @@ app.get(
   "/auth/admin/google/callback",
   passport.authenticate("admin-google", { failureRedirect: "/login.html" }),
   (req, res) => {
-    // const cookieOptions = {
-    //   httpOnly: false,
-    //   secure: false,
-    //   sameSite: "lax",
-    //   path: "/",
-    // };
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.cookie("devToken", req.user.token, cookieOptions);
     res.redirect("/admin.html");
@@ -812,12 +767,6 @@ app.get(
   "/auth/github/callback",
   passport.authenticate("github", { failureRedirect: "/login.html" }),
   (req, res) => {
-    // const cookieOptions = {
-    //   httpOnly: false,
-    //   secure: false,
-    //   sameSite: "lax",
-    //   path: "/",
-    // };
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.cookie("devToken", req.user.token, cookieOptions);
     res.redirect("/admin.html");
@@ -832,12 +781,6 @@ app.get(
   "/auth/facebook/callback",
   passport.authenticate("facebook", { failureRedirect: "/login.html" }),
   (req, res) => {
-    // const cookieOptions = {
-    //   httpOnly: false,
-    //   secure: false,
-    //   sameSite: "lax",
-    //   path: "/",
-    // };
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.cookie("devToken", req.user.token, cookieOptions);
     res.redirect("/admin.html");
@@ -855,12 +798,6 @@ app.get(
     failureRedirect: "/developer-auth.html",
   }),
   (req, res) => {
-    // const cookieOptions = {
-    //   httpOnly: false,
-    //   secure: false,
-    //   sameSite: "lax",
-    //   path: "/",
-    // };
     res.cookie("devToken", req.user.token, cookieOptions);
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.redirect("/developer-dashboard.html");
@@ -877,12 +814,6 @@ app.get(
     failureRedirect: "/developer-auth.html",
   }),
   (req, res) => {
-    // const cookieOptions = {
-    //   httpOnly: false,
-    //   secure: false,
-    //   sameSite: "lax",
-    //   path: "/",
-    // };
     res.cookie("devToken", req.user.token, cookieOptions);
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.redirect("/developer-dashboard.html");
@@ -899,12 +830,6 @@ app.get(
     failureRedirect: "/developer-auth.html",
   }),
   (req, res) => {
-    // const cookieOptions = {
-    //   httpOnly: false,
-    //   secure: false,
-    //   sameSite: "lax",
-    //   path: "/",
-    // };
     res.cookie("devToken", req.user.token, cookieOptions);
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.redirect("/developer-dashboard.html");
@@ -1086,6 +1011,7 @@ app.get(
     }
   },
 );
+
 // ============ GET CURRENT USER INFO WITH ROLE ============
 app.get("/auth/me", authMiddleware, async (req, res) => {
   try {
@@ -1377,7 +1303,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../public", "index.html"));
 });
 
-// Change password endpoint
+// ============ CHANGE PASSWORD ENDPOINT ============
 app.post("/auth/change-password", authMiddleware, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
@@ -1404,7 +1330,6 @@ app.post("/auth/change-password", authMiddleware, async (req, res) => {
 
     const user = result.rows[0];
 
-    // If user has social login only (no password)
     if (!user.password_hash) {
       return res
         .status(400)
@@ -1413,7 +1338,6 @@ app.post("/auth/change-password", authMiddleware, async (req, res) => {
         });
     }
 
-    // Verify current password
     const validPassword = await bcrypt.compare(
       currentPassword,
       user.password_hash,
@@ -1422,10 +1346,8 @@ app.post("/auth/change-password", authMiddleware, async (req, res) => {
       return res.status(401).json({ error: "Current password is incorrect" });
     }
 
-    // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password
     await pool.query(
       "UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
       [hashedPassword, req.user.id],
@@ -1437,4 +1359,5 @@ app.post("/auth/change-password", authMiddleware, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 module.exports = app;
