@@ -679,30 +679,26 @@ app.get("/portal/my-requests", authMiddleware, async (req, res) => {
     );
     res.json({ requests: result.rows });
   } catch (err) {
-    res.status(401).json({ error: "Invalid token" });
+    console.error("Database error:", err);  // ← Log the actual error
+    res.status(500).json({ error: "Server error", details: err.message });
   }
 });
-
 app.post("/portal/request-route", authMiddleware, async (req, res) => {
   try {
     const decoded = req.user;
     const { path_pattern, method, target_url, reason } = req.body;
     const { pool } = require("./config/database");
+    
     await pool.query(
       `INSERT INTO route_requests (requested_by, requested_by_email, path_pattern, method, target_url, reason, urgency, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'normal', 'pending')`,
-      [
-        decoded.id,
-        decoded.email,
-        path_pattern,
-        method,
-        target_url,
-        reason || "",
-      ],
+      [decoded.id, decoded.email, path_pattern, method, target_url, reason || ""]
     );
+    
     res.json({ message: "Request submitted successfully" });
   } catch (err) {
-    res.status(401).json({ error: "Invalid token" });
+    console.error("Error submitting request:", err);  // ← Log the real error
+    res.status(500).json({ error: "Server error", details: err.message });
   }
 });
 
@@ -757,12 +753,12 @@ app.post("/auth/google", async (req, res) => {
       { expiresIn: "24h" },
     );
 
-    const cookieOptions = {
-      httpOnly: false,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
-    };
+    // const cookieOptions = {
+    //   httpOnly: false,
+    //   secure: false,
+    //   sameSite: "lax",
+    //   path: "/",
+    // };
     res.cookie("adminToken", authToken, {
       ...cookieOptions,
       maxAge: 60 * 60 * 1000,
@@ -796,12 +792,12 @@ app.get(
   "/auth/admin/google/callback",
   passport.authenticate("admin-google", { failureRedirect: "/login.html" }),
   (req, res) => {
-    const cookieOptions = {
-      httpOnly: false,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
-    };
+    // const cookieOptions = {
+    //   httpOnly: false,
+    //   secure: false,
+    //   sameSite: "lax",
+    //   path: "/",
+    // };
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.cookie("devToken", req.user.token, cookieOptions);
     res.redirect("/admin.html");
@@ -816,12 +812,12 @@ app.get(
   "/auth/github/callback",
   passport.authenticate("github", { failureRedirect: "/login.html" }),
   (req, res) => {
-    const cookieOptions = {
-      httpOnly: false,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
-    };
+    // const cookieOptions = {
+    //   httpOnly: false,
+    //   secure: false,
+    //   sameSite: "lax",
+    //   path: "/",
+    // };
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.cookie("devToken", req.user.token, cookieOptions);
     res.redirect("/admin.html");
@@ -836,12 +832,12 @@ app.get(
   "/auth/facebook/callback",
   passport.authenticate("facebook", { failureRedirect: "/login.html" }),
   (req, res) => {
-    const cookieOptions = {
-      httpOnly: false,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
-    };
+    // const cookieOptions = {
+    //   httpOnly: false,
+    //   secure: false,
+    //   sameSite: "lax",
+    //   path: "/",
+    // };
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.cookie("devToken", req.user.token, cookieOptions);
     res.redirect("/admin.html");
@@ -859,12 +855,12 @@ app.get(
     failureRedirect: "/developer-auth.html",
   }),
   (req, res) => {
-    const cookieOptions = {
-      httpOnly: false,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
-    };
+    // const cookieOptions = {
+    //   httpOnly: false,
+    //   secure: false,
+    //   sameSite: "lax",
+    //   path: "/",
+    // };
     res.cookie("devToken", req.user.token, cookieOptions);
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.redirect("/developer-dashboard.html");
@@ -881,12 +877,12 @@ app.get(
     failureRedirect: "/developer-auth.html",
   }),
   (req, res) => {
-    const cookieOptions = {
-      httpOnly: false,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
-    };
+    // const cookieOptions = {
+    //   httpOnly: false,
+    //   secure: false,
+    //   sameSite: "lax",
+    //   path: "/",
+    // };
     res.cookie("devToken", req.user.token, cookieOptions);
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.redirect("/developer-dashboard.html");
@@ -903,12 +899,12 @@ app.get(
     failureRedirect: "/developer-auth.html",
   }),
   (req, res) => {
-    const cookieOptions = {
-      httpOnly: false,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
-    };
+    // const cookieOptions = {
+    //   httpOnly: false,
+    //   secure: false,
+    //   sameSite: "lax",
+    //   path: "/",
+    // };
     res.cookie("devToken", req.user.token, cookieOptions);
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.redirect("/developer-dashboard.html");
