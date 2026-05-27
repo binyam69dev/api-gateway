@@ -1,6 +1,4 @@
-﻿
----
-
+﻿---
 ## 📝 Truth Note
 
 This project was built **from scratch** using:
@@ -46,8 +44,5 @@ This project was built **from scratch** using:
 ### One Line Summary:
 
 > **This is a real, working, enterprise-grade API Gateway built from zero in 5 days.**
-
 ---
-
 **Want to verify?** Run `npm run dev` and test every endpoint yourself.
-
