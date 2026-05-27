@@ -20,9 +20,7 @@
 [Quick Start](#quick-start-60-seconds) • [Architecture](#architecture) • [Features](#features) • [API Docs](#api-documentation)
 
 </div>
-
 ---
-
 ## ⚡ Quick Start (60 Seconds)
 
 ```bash
@@ -59,21 +57,17 @@ curl http://localhost:3000/health
 
 ## 🏗️ Architecture
 
-\`\`\`mermaid
+```mermaid
 graph TD
     Client[🌐 Client Applications]
-
-    Gateway[🛡️ API Gateway]
     Express[⚡ Express Server]
     Auth[🔐 JWT Auth]
     Rate[📊 Rate Limiter]
     Cache[💾 Redis Cache]
     CB[🔌 Circuit Breaker]
     Router[🗺️ Dynamic Router]
-
     PG[(🐘 PostgreSQL)]
     RD[(⚡ Redis)]
-
     S1[Service 1]
     S2[Service 2]
     S3[Service N]
@@ -84,14 +78,13 @@ graph TD
     Rate --> Cache
     Cache --> CB
     CB --> Router
-
     Router --> S1
     Router --> S2
     Router --> S3
-
     Rate -.-> RD
     Cache -.-> RD
     Router -.-> PG
-    Auth -.-> PG\`\`\`
+    Auth -.-> PG
 
 **Want to verify?** Run `npm run dev` and test every endpoint yourself.
+```
