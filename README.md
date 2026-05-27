@@ -46,4 +46,52 @@ npm run dev
 curl http://localhost:3000/health
 
 ---
+**{
+  "status": "UP",
+  "timestamp": "2026-05-27T00:00:00.000Z",
+  "services": {
+    "postgres": "connected",
+    "redis": "connected"
+  }
+}
+**
+
+
+## 🏗️ Architecture
+
+\`\`\`mermaid
+graph TD
+    Client[🌐 Client Applications]
+
+    Gateway[🛡️ API Gateway]
+    Express[⚡ Express Server]
+    Auth[🔐 JWT Auth]
+    Rate[📊 Rate Limiter]
+    Cache[💾 Redis Cache]
+    CB[🔌 Circuit Breaker]
+    Router[🗺️ Dynamic Router]
+
+    PG[(🐘 PostgreSQL)]
+    RD[(⚡ Redis)]
+
+    S1[Service 1]
+    S2[Service 2]
+    S3[Service N]
+
+    Client --> Express
+    Express --> Auth
+    Auth --> Rate
+    Rate --> Cache
+    Cache --> CB
+    CB --> Router
+
+    Router --> S1
+    Router --> S2
+    Router --> S3
+
+    Rate -.-> RD
+    Cache -.-> RD
+    Router -.-> PG
+    Auth -.-> PG\`\`\`
+
 **Want to verify?** Run `npm run dev` and test every endpoint yourself.
