@@ -7,6 +7,30 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const expressRateLimit = require("express-rate-limit");
 const bcrypt = require("bcryptjs");
+const compression = require("compression");
+const crypto = require("crypto");
+
+// ============ SWAGGER ============
+const { swaggerDocs } = require('./swagger');
+// ================================
+
+// ============ PROMETHEUS METRICS ============
+const { metricsMiddleware, metricsEndpoint } = require('./utils/metrics');
+// ===========================================
+
+// ============ LOGGER ============
+const logger = require('./utils/logger');
+// ===============================
+
+// Validate required environment variables
+const requiredEnvVars = ['JWT_SECRET', 'SESSION_SECRET'];
+const missingVars = requiredEnvVars.filter(key => !process.env[key]);
+
+if (missingVars.length > 0) {
+  console.error(`❌ Fatal Error: Missing required environment variables: ${missingVars.join(', ')}`);
+  console.error('   Please set these in your .env file');
+  process.exit(1);
+}
 
 // ============ COOKIE CONFIGURATION (FROM .env) ============
 const cookieOptions = {
@@ -35,16 +59,41 @@ const {
 
 const app = express();
 
-// ============ CORS ============
+// ============ CORS (Production Ready) ============
+const allowedOrigins = [
+  'https://yourdomain.com',
+  'https://api.yourdomain.com',
+  'https://admin.yourdomain.com',
+  'https://api-gateway-ux8e.onrender.com',
+  'http://localhost:3000',
+];
+
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
-    exposedHeaders: ["Set-Cookie", "Cookie"],
+    exposedHeaders: ["Set-Cookie", "Cookie", "X-Request-ID"],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-  }),
+  })
 );
+
+// ============ FORCE HTTPS (Production) ============
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    if (!req.secure && req.headers['x-forwarded-proto'] !== 'https') {
+      return res.redirect(`https://${req.headers.host}${req.url}`);
+    }
+  }
+  next();
+});
 
 // ============ HELMET CSP ============
 app.use(
@@ -118,13 +167,44 @@ app.use(
         upgradeInsecureRequests: [],
       },
     },
-  }),
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true
+    }
+  })
 );
+
+// ============ COMPRESSION ============
+app.use(compression());
+
+// ============ SECURITY HEADERS ============
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
+});
+
+// ============ REQUEST ID TRACKING ============
+app.use((req, res, next) => {
+  req.id = crypto.randomUUID();
+  res.setHeader('X-Request-ID', req.id);
+  next();
+});
+
+// ============ PROMETHEUS METRICS MIDDLEWARE ============
+app.use(metricsMiddleware);
 
 app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+// ============ SWAGGER DOCUMENTATION ============
+const PORT = process.env.PORT || 3000;
+swaggerDocs(app, PORT);
 
 // ============ EXPRESS RATE LIMITING ============
 const authLimiter = expressRateLimit({
@@ -140,10 +220,23 @@ const apiLimiter = expressRateLimit({
   windowMs: 60 * 1000,
   max: 100,
   message: { error: "Too many requests. Please slow down." },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
+// ============ RATE LIMIT APPLICATIONS ============
 app.use("/auth/login", authLimiter);
 app.use("/auth/register", authLimiter);
+
+// ============ OAUTH RATE LIMITING ============
+app.use("/auth/google", authLimiter);
+app.use("/auth/github", authLimiter);
+app.use("/auth/facebook", authLimiter);
+app.use("/auth/admin/google", authLimiter);
+app.use("/auth/developer/google", authLimiter);
+app.use("/auth/developer/github", authLimiter);
+app.use("/auth/developer/facebook", authLimiter);
+
 app.use("/api/", apiLimiter);
 
 // ============ SESSION & PASSPORT ============
@@ -156,14 +249,14 @@ const jwt = require("jsonwebtoken");
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "session-secret",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
     },
-  }),
+  })
 );
 
 app.use(passport.initialize());
@@ -184,7 +277,7 @@ async function findOrCreateUser(profile, provider, done) {
 
     let userResult = await pool.query(
       "SELECT * FROM users WHERE email = $1 OR (social_provider = $2 AND social_id = $3)",
-      [email, provider, providerId],
+      [email, provider, providerId]
     );
 
     let user;
@@ -194,29 +287,29 @@ async function findOrCreateUser(profile, provider, done) {
         `INSERT INTO users (email, name, is_verified, role, created_at, social_provider, social_id, avatar, last_login_at) 
          VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7, NOW()) 
          RETURNING id, email, name, role`,
-        [email, name, true, "user", provider, providerId, avatar],
+        [email, name, true, "user", provider, providerId, avatar]
       );
       user = insertResult.rows[0];
-      console.log(`Created new ${provider} user:`, user.email);
+      logger.info(`Created new ${provider} user: ${user.email}`);
     } else {
       user = userResult.rows[0];
       await pool.query(
         `UPDATE users SET social_provider = $1, social_id = $2, avatar = COALESCE($3, avatar),
-         last_login_at = NOW(), login_count = login_count + 1 WHERE id = $4`,
-        [provider, providerId, avatar, user.id],
+         last_login_at = NOW() WHERE id = $4`,
+        [provider, providerId, avatar, user.id]
       );
-      console.log(`Updated existing ${provider} user:`, user.email);
+      logger.info(`Updated existing ${provider} user: ${user.email}`);
     }
 
     const authToken = jwt.sign(
       { id: user.id, email: user.email, role: user.role || "user" },
-      process.env.JWT_SECRET || "secret",
-      { expiresIn: "24h" },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
     );
 
     return done(null, { ...user, token: authToken });
   } catch (error) {
-    console.error(`${provider} auth error:`, error);
+    logger.error(`${provider} auth error: ${error.message}`);
     return done(error, null);
   }
 }
@@ -233,26 +326,23 @@ passport.use(
     },
     (accessToken, refreshToken, profile, done) => {
       findOrCreateUser(profile, "google", done);
-    },
-  ),
+    }
+  )
 );
 
 passport.use(
   "developer-google",
   new GoogleStrategy(
     {
-      clientID:
-        process.env.DEV_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID,
-      clientSecret:
-        process.env.DEV_GOOGLE_CLIENT_SECRET ||
-        process.env.GOOGLE_CLIENT_SECRET,
+      clientID: process.env.DEV_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.DEV_GOOGLE_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: `${process.env.APP_URL}/auth/developer/google/callback`,
       scope: ["profile", "email"],
     },
     (accessToken, refreshToken, profile, done) => {
       findOrCreateUser(profile, "google", done);
-    },
-  ),
+    }
+  )
 );
 
 passport.use(
@@ -266,26 +356,23 @@ passport.use(
     },
     (accessToken, refreshToken, profile, done) => {
       findOrCreateUser(profile, "github", done);
-    },
-  ),
+    }
+  )
 );
 
 passport.use(
   "developer-github",
   new GitHubStrategy(
     {
-      clientID:
-        process.env.DEV_GITHUB_CLIENT_ID || process.env.GITHUB_CLIENT_ID,
-      clientSecret:
-        process.env.DEV_GITHUB_CLIENT_SECRET ||
-        process.env.GITHUB_CLIENT_SECRET,
+      clientID: process.env.DEV_GITHUB_CLIENT_ID || process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.DEV_GITHUB_CLIENT_SECRET || process.env.GITHUB_CLIENT_SECRET,
       callbackURL: `${process.env.APP_URL}/auth/developer/github/callback`,
       scope: ["user:email"],
     },
     (accessToken, refreshToken, profile, done) => {
       findOrCreateUser(profile, "github", done);
-    },
-  ),
+    }
+  )
 );
 
 passport.use(
@@ -299,8 +386,8 @@ passport.use(
     },
     (accessToken, refreshToken, profile, done) => {
       findOrCreateUser(profile, "facebook", done);
-    },
-  ),
+    }
+  )
 );
 
 passport.use(
@@ -308,15 +395,14 @@ passport.use(
   new FacebookStrategy(
     {
       clientID: process.env.DEV_FACEBOOK_APP_ID || process.env.FACEBOOK_APP_ID,
-      clientSecret:
-        process.env.DEV_FACEBOOK_APP_SECRET || process.env.FACEBOOK_APP_SECRET,
+      clientSecret: process.env.DEV_FACEBOOK_APP_SECRET || process.env.FACEBOOK_APP_SECRET,
       callbackURL: `${process.env.APP_URL}/auth/developer/facebook/callback`,
       profileFields: ["id", "emails", "name", "picture.type(large)"],
     },
     (accessToken, refreshToken, profile, done) => {
       findOrCreateUser(profile, "facebook", done);
-    },
-  ),
+    }
+  )
 );
 
 passport.serializeUser((user, done) => {
@@ -328,7 +414,7 @@ passport.deserializeUser(async (id, done) => {
     const { pool } = require("./config/database");
     const result = await pool.query(
       "SELECT id, email, name, role FROM users WHERE id = $1",
-      [id],
+      [id]
     );
     done(null, result.rows[0]);
   } catch (err) {
@@ -340,13 +426,13 @@ passport.deserializeUser(async (id, done) => {
 function generateTokens(userId, email, role) {
   const accessToken = jwt.sign(
     { id: userId, email, role },
-    process.env.JWT_SECRET || "secret",
-    { expiresIn: process.env.JWT_EXPIRES_IN || "1h" },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || "1h" }
   );
   const refreshToken = jwt.sign(
     { id: userId, email },
-    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || "secret",
-    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d" },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d" }
   );
   return { accessToken, refreshToken };
 }
@@ -357,7 +443,7 @@ async function storeRefreshToken(userId, refreshToken) {
   expiresAt.setDate(expiresAt.getDate() + 7);
   await pool.query(
     `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`,
-    [userId, refreshToken, expiresAt],
+    [userId, refreshToken, expiresAt]
   );
 }
 
@@ -371,25 +457,23 @@ app.post("/auth/refresh", async (req, res) => {
     const { pool } = require("./config/database");
     const tokenResult = await pool.query(
       "SELECT * FROM refresh_tokens WHERE token = $1 AND revoked = FALSE AND expires_at > NOW()",
-      [refreshToken],
+      [refreshToken]
     );
     if (tokenResult.rows.length === 0) {
-      return res
-        .status(401)
-        .json({ error: "Invalid or expired refresh token" });
+      return res.status(401).json({ error: "Invalid or expired refresh token" });
     }
     const decoded = jwt.verify(
       refreshToken,
-      process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || "secret",
+      process.env.JWT_REFRESH_SECRET
     );
     const { accessToken, refreshToken: newRefreshToken } = generateTokens(
       decoded.id,
       decoded.email,
-      decoded.role,
+      decoded.role
     );
     await pool.query(
       "UPDATE refresh_tokens SET revoked = TRUE WHERE token = $1",
-      [refreshToken],
+      [refreshToken]
     );
     await storeRefreshToken(decoded.id, newRefreshToken);
     res.json({ accessToken, refreshToken: newRefreshToken });
@@ -422,24 +506,32 @@ app.post("/auth/login", authLimiter, async (req, res) => {
     if (!validPassword) {
       await pool.query(
         "UPDATE users SET login_attempts = COALESCE(login_attempts, 0) + 1 WHERE id = $1",
-        [user.id],
+        [user.id]
       );
       return res.status(401).json({ error: "Invalid credentials" });
     }
     await pool.query(
       "UPDATE users SET login_attempts = 0, last_login_at = NOW() WHERE id = $1",
-      [user.id],
+      [user.id]
     );
+
+    // Regenerate session to prevent session fixation
+    req.session.regenerate((err) => {
+      if (err) {
+        logger.error("Session regeneration error:", err);
+        return res.status(500).json({ error: "Session error" });
+      }
+    });
 
     const accessToken = jwt.sign(
       { id: user.id, email: user.email, role: user.role || "user" },
-      process.env.JWT_SECRET || "secret",
-      { expiresIn: "1h" },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
     );
     const refreshToken = jwt.sign(
       { id: user.id, email: user.email },
-      process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || "secret",
-      { expiresIn: "7d" },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" }
     );
 
     const expiresAt = new Date();
@@ -448,7 +540,7 @@ app.post("/auth/login", authLimiter, async (req, res) => {
     try {
       await pool.query(
         `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`,
-        [user.id, refreshToken, expiresAt],
+        [user.id, refreshToken, expiresAt]
       );
     } catch (tableError) {
       await pool.query(`
@@ -463,7 +555,7 @@ app.post("/auth/login", authLimiter, async (req, res) => {
       `);
       await pool.query(
         `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`,
-        [user.id, refreshToken, expiresAt],
+        [user.id, refreshToken, expiresAt]
       );
     }
 
@@ -480,7 +572,7 @@ app.post("/auth/login", authLimiter, async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    console.log("Cookies set successfully for user:", user.email);
+    logger.info(`User logged in: ${user.email}`);
 
     res.json({
       message: "Login successful",
@@ -492,7 +584,7 @@ app.post("/auth/login", authLimiter, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
+    logger.error("Login error:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -521,7 +613,7 @@ app.post("/auth/register", authLimiter, async (req, res) => {
 
     const existingUser = await pool.query(
       "SELECT id FROM users WHERE email = $1",
-      [email.toLowerCase()],
+      [email.toLowerCase()]
     );
     if (existingUser.rows.length > 0) {
       return res.status(400).json({ error: "Email already registered" });
@@ -531,14 +623,14 @@ app.post("/auth/register", authLimiter, async (req, res) => {
 
     let usernameExists = await pool.query(
       "SELECT id FROM users WHERE username = $1",
-      [finalUsername],
+      [finalUsername]
     );
     let counter = 1;
     while (usernameExists.rows.length > 0) {
       finalUsername = `${email.split("@")[0]}${counter}`;
       usernameExists = await pool.query(
         "SELECT id FROM users WHERE username = $1",
-        [finalUsername],
+        [finalUsername]
       );
       counter++;
     }
@@ -557,16 +649,11 @@ app.post("/auth/register", authLimiter, async (req, res) => {
         finalUsername,
         "user",
         true,
-      ],
+      ]
     );
 
     const newUser = result.rows[0];
-    console.log(
-      "✅ New user registered:",
-      newUser.email,
-      "Username:",
-      newUser.username,
-    );
+    logger.info(`New user registered: ${newUser.email}, Username: ${newUser.username}`);
 
     res.status(201).json({
       message: "Registration successful! Please login.",
@@ -578,7 +665,7 @@ app.post("/auth/register", authLimiter, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Registration error:", error);
+    logger.error("Registration error:", error);
     res.status(500).json({ error: "Registration failed. Please try again." });
   }
 });
@@ -609,17 +696,59 @@ app.get("/api/config/google", (req, res) => {
 });
 
 // ============ HEALTH & METRICS ============
-app.get("/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+async function checkDatabase() {
+  try {
+    const { pool } = require("./config/database");
+    await pool.query('SELECT 1');
+    return true;
+  } catch {
+    return false;
+  }
+}
+async function checkRedis() {
+    try {
+        const { redisClient } = require("./config/redis");
+        if (redisClient && redisClient.isOpen) {
+            await redisClient.ping();
+            return true;
+        }
+        return false;
+    } catch {
+        return false;
+    }
+}
+
+app.
+get("/health", async (req, res) => {
+  const health = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    services: {
+      database: await checkDatabase(),
+      redis: await checkRedis(),
+    }
+  };
+  
+  if (health.services.database && health.services.redis) {
+    res.status(200).json(health);
+  } else {
+    res.status(503).json(health);
+  }
 });
 
-app.get("/metrics", authMiddleware, adminMiddleware, (req, res) => {
-  res.json({
-    status: "healthy",
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-    version: "1.0.0",
-  });
+// ============ PROMETHEUS METRICS ENDPOINT ============
+app.get("/metrics", metricsEndpoint);
+
+// ============ API VERSIONING ============
+// API v1 routes
+app.get('/api/v1/health', (req, res) => {
+  res.json({ status: 'ok', version: 'v1' });
+});
+
+// Redirect legacy routes to v1
+app.get('/health', (req, res) => {
+  res.redirect('/api/v1/health');
 });
 
 // ============ ROUTES API (CACHED) ============
@@ -627,7 +756,7 @@ app.get("/routes", cache(60), async (req, res) => {
   try {
     const { pool } = require("./config/database");
     const result = await pool.query(
-      "SELECT path_pattern, method, required_role, rate_limit_per_minute, cache_ttl_seconds FROM routes WHERE is_active = true LIMIT 100",
+      "SELECT path_pattern, method, required_role, rate_limit_per_minute, cache_ttl_seconds FROM routes WHERE is_active = true LIMIT 100"
     );
     res.json({ routes: result.rows });
   } catch (err) {
@@ -641,11 +770,11 @@ app.get("/portal/my-requests", authMiddleware, async (req, res) => {
     const { pool } = require("./config/database");
     const result = await pool.query(
       "SELECT * FROM route_requests WHERE requested_by = $1 ORDER BY created_at DESC",
-      [req.user.id],
+      [req.user.id]
     );
     res.json({ requests: result.rows });
   } catch (err) {
-    console.error("Database error:", err);
+    logger.error("Database error:", err);
     res.status(500).json({ error: "Server error", details: err.message });
   }
 });
@@ -664,7 +793,7 @@ app.post("/portal/request-route", authMiddleware, async (req, res) => {
     
     res.json({ message: "Request submitted successfully" });
   } catch (err) {
-    console.error("Error submitting request:", err);
+    logger.error("Error submitting request:", err);
     res.status(500).json({ error: "Server error", details: err.message });
   }
 });
@@ -702,22 +831,22 @@ app.post("/auth/google", async (req, res) => {
           "google",
           googleId,
           picture,
-        ],
+        ]
       );
       user = insertResult.rows[0];
     } else {
       user = userResult.rows[0];
       await pool.query(
         `UPDATE users SET social_provider = $1, social_id = $2, avatar = COALESCE($3, avatar),
-         last_login_at = NOW(), login_count = login_count + 1 WHERE id = $4`,
-        ["google", googleId, picture, user.id],
+         last_login_at = NOW() WHERE id = $4`,
+        ["google", googleId, picture, user.id]
       );
     }
 
     const authToken = jwt.sign(
       { id: user.id, email: user.email, role: user.role || "user" },
-      process.env.JWT_SECRET || "secret",
-      { expiresIn: "24h" },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
     );
 
     res.cookie("adminToken", authToken, {
@@ -739,7 +868,7 @@ app.post("/auth/google", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Google auth error:", error);
+    logger.error("Google auth error:", error);
     res.status(401).json({ error: "Invalid Google token: " + error.message });
   }
 });
@@ -747,7 +876,7 @@ app.post("/auth/google", async (req, res) => {
 // ============ ADMIN OAUTH ROUTES ============
 app.get(
   "/auth/admin/google",
-  passport.authenticate("admin-google", { scope: ["profile", "email"] }),
+  passport.authenticate("admin-google", { scope: ["profile", "email"] })
 );
 app.get(
   "/auth/admin/google/callback",
@@ -756,12 +885,12 @@ app.get(
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.cookie("devToken", req.user.token, cookieOptions);
     res.redirect("/admin.html");
-  },
+  }
 );
 
 app.get(
   "/auth/github",
-  passport.authenticate("github", { scope: ["user:email"] }),
+  passport.authenticate("github", { scope: ["user:email"] })
 );
 app.get(
   "/auth/github/callback",
@@ -770,12 +899,12 @@ app.get(
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.cookie("devToken", req.user.token, cookieOptions);
     res.redirect("/admin.html");
-  },
+  }
 );
 
 app.get(
   "/auth/facebook",
-  passport.authenticate("facebook", { scope: ["email"] }),
+  passport.authenticate("facebook", { scope: ["email"] })
 );
 app.get(
   "/auth/facebook/callback",
@@ -784,13 +913,13 @@ app.get(
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.cookie("devToken", req.user.token, cookieOptions);
     res.redirect("/admin.html");
-  },
+  }
 );
 
 // ============ DEVELOPER OAUTH ROUTES ============
 app.get(
   "/auth/developer/google",
-  passport.authenticate("developer-google", { scope: ["profile", "email"] }),
+  passport.authenticate("developer-google", { scope: ["profile", "email"] })
 );
 app.get(
   "/auth/developer/google/callback",
@@ -801,12 +930,12 @@ app.get(
     res.cookie("devToken", req.user.token, cookieOptions);
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.redirect("/developer-dashboard.html");
-  },
+  }
 );
 
 app.get(
   "/auth/developer/github",
-  passport.authenticate("developer-github", { scope: ["user:email"] }),
+  passport.authenticate("developer-github", { scope: ["user:email"] })
 );
 app.get(
   "/auth/developer/github/callback",
@@ -817,12 +946,12 @@ app.get(
     res.cookie("devToken", req.user.token, cookieOptions);
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.redirect("/developer-dashboard.html");
-  },
+  }
 );
 
 app.get(
   "/auth/developer/facebook",
-  passport.authenticate("developer-facebook", { scope: ["email"] }),
+  passport.authenticate("developer-facebook", { scope: ["email"] })
 );
 app.get(
   "/auth/developer/facebook/callback",
@@ -833,7 +962,7 @@ app.get(
     res.cookie("devToken", req.user.token, cookieOptions);
     res.cookie("adminToken", req.user.token, cookieOptions);
     res.redirect("/developer-dashboard.html");
-  },
+  }
 );
 
 // ============ SOCIAL AUTH URL ENDPOINT ============
@@ -859,13 +988,13 @@ app.get("/auth/profile", authMiddleware, async (req, res) => {
     const result = await pool.query(
       `SELECT id, email, name, role, company, website, location, bio, avatar, created_at, monthly_requests, is_verified 
        FROM users WHERE id = $1`,
-      [req.user.id],
+      [req.user.id]
     );
     if (result.rows.length === 0)
       return res.status(404).json({ error: "User not found" });
     res.json({ user: result.rows[0] });
   } catch (err) {
-    console.error("Error fetching profile:", err);
+    logger.error("Error fetching profile:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -911,7 +1040,7 @@ app.put("/auth/update-profile", authMiddleware, async (req, res) => {
       user: result.rows[0],
     });
   } catch (err) {
-    console.error("Error updating profile:", err);
+    logger.error("Error updating profile:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -923,11 +1052,11 @@ app.post("/auth/update-avatar", authMiddleware, async (req, res) => {
     const { pool } = require("./config/database");
     await pool.query(
       `UPDATE users SET avatar = $1, updated_at = NOW() WHERE id = $2`,
-      [avatar, req.user.id],
+      [avatar, req.user.id]
     );
     res.json({ success: true, message: "Avatar updated successfully" });
   } catch (err) {
-    console.error("Error updating avatar:", err);
+    logger.error("Error updating avatar:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -945,13 +1074,13 @@ app.get("/admin/me", authMiddleware, adminMiddleware, async (req, res) => {
     const { pool } = require("./config/database");
     const result = await pool.query(
       "SELECT id, email, name, role, company, created_at FROM users WHERE id = $1",
-      [req.user.id],
+      [req.user.id]
     );
     if (result.rows.length === 0)
       return res.status(404).json({ error: "User not found" });
     res.json(result.rows[0]);
   } catch (err) {
-    console.error("Error fetching user:", err);
+    logger.error("Error fetching user:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -965,12 +1094,12 @@ app.get(
     try {
       const { pool } = require("./config/database");
       const routesResult = await pool.query(
-        "SELECT COUNT(*) FROM routes WHERE is_active = true",
+        "SELECT COUNT(*) FROM routes WHERE is_active = true"
       );
       const developersResult = await pool.query("SELECT COUNT(*) FROM users");
       const pendingResult = await pool.query(
         "SELECT COUNT(*) FROM route_requests WHERE status = $1",
-        ["pending"],
+        ["pending"]
       );
       let totalCalls = 0;
       try {
@@ -988,10 +1117,10 @@ app.get(
         },
       });
     } catch (err) {
-      console.error("Error fetching analytics:", err);
+      logger.error("Error fetching analytics:", err);
       res.status(500).json({ error: err.message });
     }
-  },
+  }
 );
 
 app.get(
@@ -1002,14 +1131,14 @@ app.get(
     try {
       const { pool } = require("./config/database");
       const result = await pool.query(
-        "SELECT id, email, name, role, company, created_at, monthly_requests, is_verified, avatar FROM users ORDER BY created_at DESC",
+        "SELECT id, email, name, role, company, created_at, monthly_requests, is_verified, avatar FROM users ORDER BY created_at DESC"
       );
       res.json({ developers: result.rows });
     } catch (err) {
-      console.error("Error fetching developers:", err);
+      logger.error("Error fetching developers:", err);
       res.status(500).json({ error: err.message });
     }
-  },
+  }
 );
 
 // ============ GET CURRENT USER INFO WITH ROLE ============
@@ -1018,7 +1147,7 @@ app.get("/auth/me", authMiddleware, async (req, res) => {
     const { pool } = require("./config/database");
     const result = await pool.query(
       "SELECT id, email, name, role, created_at FROM users WHERE id = $1",
-      [req.user.id],
+      [req.user.id]
     );
 
     if (result.rows.length === 0) {
@@ -1044,14 +1173,14 @@ app.get(
       const { pool } = require("./config/database");
       const result = await pool.query(
         "SELECT * FROM route_requests WHERE status = $1 ORDER BY created_at ASC",
-        ["pending"],
+        ["pending"]
       );
       res.json({ requests: result.rows });
     } catch (err) {
-      console.error("Error fetching pending requests:", err);
+      logger.error("Error fetching pending requests:", err);
       res.status(500).json({ error: err.message });
     }
-  },
+  }
 );
 
 app.post(
@@ -1064,7 +1193,7 @@ app.post(
       const { pool } = require("./config/database");
       const requestResult = await pool.query(
         "SELECT * FROM route_requests WHERE id = $1",
-        [id],
+        [id]
       );
       if (requestResult.rows.length === 0)
         return res.status(404).json({ error: "Request not found" });
@@ -1081,21 +1210,21 @@ app.post(
           60,
           true,
           request.requested_by,
-        ],
+        ]
       );
       await pool.query(
         "UPDATE route_requests SET status = $1, reviewed_by = $2, reviewed_at = NOW() WHERE id = $3",
-        ["approved", req.user.id, id],
+        ["approved", req.user.id, id]
       );
       res.json({
         success: true,
         message: "Request approved and route created",
       });
     } catch (err) {
-      console.error("Error approving request:", err);
+      logger.error("Error approving request:", err);
       res.status(500).json({ error: err.message });
     }
-  },
+  }
 );
 
 app.post(
@@ -1109,14 +1238,14 @@ app.post(
       const { pool } = require("./config/database");
       await pool.query(
         "UPDATE route_requests SET status = $1, rejection_reason = $2, reviewed_by = $3, reviewed_at = NOW() WHERE id = $4",
-        ["rejected", reason || "No reason provided", req.user.id, id],
+        ["rejected", reason || "No reason provided", req.user.id, id]
       );
       res.json({ success: true, message: "Request rejected" });
     } catch (err) {
-      console.error("Error rejecting request:", err);
+      logger.error("Error rejecting request:", err);
       res.status(500).json({ error: err.message });
     }
-  },
+  }
 );
 
 app.post(
@@ -1132,7 +1261,7 @@ app.post(
       for (const id of ids) {
         const requestResult = await pool.query(
           "SELECT * FROM route_requests WHERE id = $1",
-          [id],
+          [id]
         );
         if (requestResult.rows.length === 0) continue;
         const request = requestResult.rows[0];
@@ -1148,19 +1277,19 @@ app.post(
             60,
             true,
             request.requested_by,
-          ],
+          ]
         );
         await pool.query(
           "UPDATE route_requests SET status = $1, reviewed_by = $2, reviewed_at = NOW() WHERE id = $3",
-          ["approved", req.user.id, id],
+          ["approved", req.user.id, id]
         );
       }
       res.json({ success: true, message: `${ids.length} requests approved` });
     } catch (err) {
-      console.error("Error bulk approving:", err);
+      logger.error("Error bulk approving:", err);
       res.status(500).json({ error: err.message });
     }
-  },
+  }
 );
 
 app.put(
@@ -1178,7 +1307,7 @@ app.put(
       const { pool } = require("./config/database");
       const currentUser = await pool.query(
         "SELECT role FROM users WHERE id = $1",
-        [userId],
+        [userId]
       );
       if (currentUser.rows.length === 0)
         return res.status(404).json({ error: "User not found" });
@@ -1189,7 +1318,7 @@ app.put(
       if (role === "user" && currentUser.rows[0].role === "admin") {
         const adminCount = await pool.query(
           "SELECT COUNT(*) FROM users WHERE role = $1",
-          ["admin"],
+          ["admin"]
         );
         if (parseInt(adminCount.rows[0].count) <= 1)
           return res
@@ -1198,14 +1327,14 @@ app.put(
       }
       await pool.query(
         "UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2",
-        [role, userId],
+        [role, userId]
       );
       res.json({ success: true, message: `User role updated to ${role}` });
     } catch (err) {
-      console.error("Error updating role:", err);
+      logger.error("Error updating role:", err);
       res.status(500).json({ error: err.message });
     }
-  },
+  }
 );
 
 app.delete(
@@ -1218,15 +1347,15 @@ app.delete(
       const { pool } = require("./config/database");
       await pool.query(
         "DELETE FROM routes WHERE path_pattern = $1 AND method = $2",
-        [decodeURIComponent(path), method],
+        [decodeURIComponent(path), method]
       );
       res.json({ success: true, message: "Route deleted" });
       await clearCache(`cache:/routes*`);
     } catch (err) {
-      console.error("Error deleting route:", err);
+      logger.error("Error deleting route:", err);
       res.status(500).json({ error: err.message });
     }
-  },
+  }
 );
 
 app.post("/admin/routes", authMiddleware, adminMiddleware, async (req, res) => {
@@ -1254,12 +1383,12 @@ app.post("/admin/routes", authMiddleware, adminMiddleware, async (req, res) => {
         cache_ttl_seconds || 60,
         true,
         req.user.id,
-      ],
+      ]
     );
     await clearCache(`cache:/routes*`);
     res.json({ success: true, message: "Route added" });
   } catch (err) {
-    console.error("Error adding route:", err);
+    logger.error("Error adding route:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1273,10 +1402,10 @@ app.post(
       await clearAllCache();
       res.json({ success: true, message: "Cache cleared" });
     } catch (err) {
-      console.error("Error clearing cache:", err);
+      logger.error("Error clearing cache:", err);
       res.status(500).json({ error: err.message });
     }
-  },
+  }
 );
 
 app.post(
@@ -1291,10 +1420,10 @@ app.post(
       if (cache_ttl) await redis.set("settings:cache_ttl", cache_ttl);
       res.json({ success: true, message: "Settings updated" });
     } catch (err) {
-      console.error("Error updating settings:", err);
+      logger.error("Error updating settings:", err);
       res.status(500).json({ error: err.message });
     }
-  },
+  }
 );
 
 // ============ STATIC FILES ============
@@ -1321,7 +1450,7 @@ app.post("/auth/change-password", authMiddleware, async (req, res) => {
     const { pool } = require("./config/database");
     const result = await pool.query(
       "SELECT password_hash FROM users WHERE id = $1",
-      [req.user.id],
+      [req.user.id]
     );
 
     if (result.rows.length === 0) {
@@ -1340,7 +1469,7 @@ app.post("/auth/change-password", authMiddleware, async (req, res) => {
 
     const validPassword = await bcrypt.compare(
       currentPassword,
-      user.password_hash,
+      user.password_hash
     );
     if (!validPassword) {
       return res.status(401).json({ error: "Current password is incorrect" });
@@ -1350,12 +1479,12 @@ app.post("/auth/change-password", authMiddleware, async (req, res) => {
 
     await pool.query(
       "UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
-      [hashedPassword, req.user.id],
+      [hashedPassword, req.user.id]
     );
 
     res.json({ message: "Password changed successfully" });
   } catch (error) {
-    console.error("Password change error:", error);
+    logger.error("Password change error:", error);
     res.status(500).json({ error: "Server error" });
   }
 });

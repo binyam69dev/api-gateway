@@ -5,6 +5,34 @@ const { connectRedis } = require('./config/redis');
 
 const PORT = parseInt(process.env.PORT) || 3000;
 
+// src/index.js - ADD THIS AT THE BOTTOM
+
+// ============ GRACEFUL SHUTDOWN ============
+async function closeConnections() {
+  try {
+    const { pool } = require('./config/database');
+    const { redis } = require('./config/redis');
+    
+    await pool.end();
+    await redis.quit();
+    console.log('✅ Connections closed');
+  } catch (err) {
+    console.error('❌ Error closing connections:', err.message);
+  }
+}
+
+process.on('SIGTERM', async () => {
+  console.log('🛑 Received SIGTERM, shutting down gracefully...');
+  await closeConnections();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('🛑 Received SIGINT, shutting down gracefully...');
+  await closeConnections();
+  process.exit(0);
+});
+
 async function start() {
     try {
         // Test database connection
@@ -55,5 +83,6 @@ process.on('SIGTERM', async () => {
     console.log('\n🛑 Shutting down gracefully...');
     process.exit(0);
 });
+
 
 start();

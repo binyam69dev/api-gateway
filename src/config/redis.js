@@ -2,7 +2,6 @@
 
 const redisClient = redis.createClient({
     url: `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
-    // Connection settings
     socket: {
         reconnectStrategy: (retries) => {
             console.log(`Redis reconnect attempt ${retries}`);
@@ -18,10 +17,6 @@ const redisClient = redis.createClient({
 
 redisClient.on('error', (err) => {
     console.error('❌ Redis error:', err.message);
-    if (process.env.NODE_ENV === 'production') {
-        // In production, you might want to alert monitoring
-        console.error('Redis connection issues - rate limiting may be affected');
-    }
 });
 
 redisClient.on('connect', () => {
@@ -71,7 +66,7 @@ async function incrementRateLimit(key, windowSeconds, maxRequests) {
         return current > maxRequests;
     } catch (err) {
         console.error('Rate limit error:', err.message);
-        return false; // Fail open - allow request if Redis fails
+        return false;
     }
 }
 

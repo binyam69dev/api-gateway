@@ -1,5 +1,11 @@
 ﻿node_modules/
 .env
+# Environment files (DO NOT COMMIT!)
+.env
+.env.*
+!.env.example
+!.env.dev.template
+!.env.prod.template
 .env.local
 .DS_Store
 *.log

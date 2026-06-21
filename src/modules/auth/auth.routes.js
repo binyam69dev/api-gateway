@@ -21,13 +21,17 @@ const loginLimiter = rateLimit({
     message: { error: 'Too many login attempts. Please try again later.' }
 });
 
-// ============ COOKIE OPTIONS ============
-const 
+const refreshLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 30,
+    message: { error: 'Too many refresh requests. Please try again later.' }
+});
 
-CookieOptions = () => ({
-    httpOnly: process.env.NODE_ENV === 'production',
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+// ============ COOKIE OPTIONS ============
+const getCookieOptions = () => ({
+    httpOnly: process.env.COOKIE_HTTP_ONLY === 'true' || process.env.NODE_ENV === 'production',
+    secure: process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production',
+    sameSite: process.env.COOKIE_SAME_SITE || 'lax',
     path: '/',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
 });
@@ -56,6 +60,7 @@ function logActivity(type, email, status, details = {}) {
     const logEntry = `[${timestamp}] ${type} | ${email} | ${status} | IP: ${details.ip || 'unknown'} | UA: ${details.ua?.substring(0, 50) || 'unknown'}`;
     console.log(logEntry);
     
+    // In production, log to database
     if (process.env.NODE_ENV === 'production') {
         pool.query(
             `INSERT INTO activity_logs (type, email, status, ip_address, user_agent, details)
@@ -70,7 +75,10 @@ const authenticateCookie = async (req, res, next) => {
     const token = req.cookies.adminToken || req.cookies.devToken;
     
     if (!token) {
-        return res.status(401).json({ error: 'No token provided. Please login.' });
+        return res.status(401).json({ 
+            error: 'No token provided. Please login.',
+            code: 'NO_TOKEN'
+        });
     }
     
     try {
@@ -78,11 +86,61 @@ const authenticateCookie = async (req, res, next) => {
         req.user = decoded;
         next();
     } catch (error) {
-        return res.status(401).json({ error: 'Invalid or expired token. Please login again.' });
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ 
+                error: 'Token expired. Please login again.',
+                code: 'TOKEN_EXPIRED'
+            });
+        }
+        return res.status(401).json({ 
+            error: 'Invalid token. Please login again.',
+            code: 'INVALID_TOKEN'
+        });
     }
 };
 
 // ============ REGISTER ============
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     description: |
+ *       Create a new user account with email and password.
+ *       Password must be at least 8 characters with uppercase, lowercase, number, and special character.
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: SecurePass123!
+ *               name:
+ *                 type: string
+ *                 example: John Doe
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: Validation error
+ *       409:
+ *         description: User already exists
+ *       429:
+ *         description: Too many registration attempts
+ */
 router.post('/register', registerLimiter, [
     body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
     body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
@@ -107,7 +165,7 @@ router.post('/register', registerLimiter, [
         const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
         if (existing.rows.length > 0) {
             logActivity('REGISTER_FAILED', email, 'ALREADY_EXISTS', { ip: req.ip });
-            return res.status(400).json({ error: 'User already exists' });
+            return res.status(409).json({ error: 'User already exists' });
         }
         
         const saltRounds = process.env.NODE_ENV === 'production' ? 12 : 10;
@@ -134,11 +192,73 @@ router.post('/register', registerLimiter, [
         
     } catch (error) {
         logActivity('REGISTER_ERROR', email, 'ERROR', { ip: req.ip, error: error.message });
+        console.error('Registration error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
 // ============ LOGIN (COOKIE-BASED) ============
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login to the API Gateway
+ *     description: |
+ *       Authenticate a user and receive secure HttpOnly cookies.
+ *       After successful login, `adminToken` or `devToken` cookies are set.
+ *       These cookies are automatically sent with subsequent requests.
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: admin@gateway.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: Admin123!
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         headers:
+ *           Set-Cookie:
+ *             schema:
+ *               type: string
+ *             description: 'adminToken, devToken, refreshToken (HttpOnly)'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Login successful
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *       401:
+ *         description: Invalid credentials
+ *       429:
+ *         description: Too many login attempts
+ */
 router.post('/login', loginLimiter, [
     body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
     body('password').notEmpty().withMessage('Password is required')
@@ -172,12 +292,17 @@ router.post('/login', loginLimiter, [
         
         const valid = await bcrypt.compare(password, user.password_hash);
         if (!valid) {
+            await pool.query(
+                'UPDATE users SET login_attempts = COALESCE(login_attempts, 0) + 1 WHERE id = $1',
+                [user.id]
+            );
             logActivity('LOGIN_FAILED', email, 'INVALID_PASSWORD', { ip: req.ip });
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         
+        // Reset login attempts on success
         await pool.query(
-            `UPDATE users SET last_login = NOW(), last_ip = $1, login_count = login_count + 1 WHERE id = $2`,
+            `UPDATE users SET login_attempts = 0, last_login = NOW(), last_ip = $1, login_count = login_count + 1 WHERE id = $2`,
             [req.ip, user.id]
         );
         
@@ -199,7 +324,7 @@ router.post('/login', loginLimiter, [
             { expiresIn: '7d' }
         );
         
-        // ✅ SET COOKIES (instead of sending token in JSON)
+        // Set cookies
         res.cookie('adminToken', token, getCookieOptions());
         res.cookie('devToken', token, getCookieOptions());
         res.cookie('refreshToken', refreshToken, getRefreshCookieOptions());
@@ -223,16 +348,33 @@ router.post('/login', loginLimiter, [
         
     } catch (error) {
         logActivity('LOGIN_ERROR', email, 'ERROR', { ip: req.ip, error: error.message });
+        console.error('Login error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
 // ============ REFRESH TOKEN ============
-router.post('/refresh-token', async (req, res) => {
+/**
+ * @swagger
+ * /auth/refresh-token:
+ *   post:
+ *     summary: Refresh authentication token
+ *     description: |
+ *       Uses the refresh token cookie to get a new access token.
+ *       The refresh token is automatically sent via cookie.
+ *     tags:
+ *       - Authentication
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *       401:
+ *         description: Invalid or expired refresh token
+ */
+router.post('/refresh-token', refreshLimiter, async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
     
     if (!refreshToken) {
-        return res.status(400).json({ error: 'Refresh token required' });
+        return res.status(401).json({ error: 'Refresh token required' });
     }
     
     try {
@@ -249,7 +391,7 @@ router.post('/refresh-token', async (req, res) => {
             { expiresIn: '24h' }
         );
         
-        // ✅ Set new cookie
+        // Set new cookie
         res.cookie('adminToken', newToken, getCookieOptions());
         res.cookie('devToken', newToken, getCookieOptions());
         
@@ -263,20 +405,63 @@ router.post('/refresh-token', async (req, res) => {
     }
 });
 
-// ============ LOGOUT (Clear Cookies) ============
+// ============ LOGOUT ============
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout and clear cookies
+ *     description: |
+ *       Clears all authentication cookies (adminToken, devToken, refreshToken).
+ *       After logout, the user must login again to access protected endpoints.
+ *     tags:
+ *       - Authentication
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Logged out successfully
+ */
 router.post('/logout', (req, res) => {
     const email = req.cookies.adminToken ? 'authenticated' : 'unknown';
     
-    // ✅ Clear all cookies
-    res.clearCookie('adminToken');
-    res.clearCookie('devToken');
-    res.clearCookie('refreshToken');
+    // Clear all cookies
+    res.clearCookie('adminToken', { path: '/' });
+    res.clearCookie('devToken', { path: '/' });
+    res.clearCookie('refreshToken', { path: '/' });
     
     logActivity('LOGOUT', email, 'SUCCESS', { ip: req.ip });
     res.json({ message: 'Logged out successfully' });
 });
 
-// ============ GET PROFILE (COOKIE-BASED) ============
+// ============ GET PROFILE ============
+/**
+ * @swagger
+ * /auth/profile:
+ *   get:
+ *     summary: Get current user profile
+ *     description: |
+ *       Returns the profile information of the currently authenticated user.
+ *       Requires a valid authentication cookie.
+ *     tags:
+ *       - Profile
+ *     security:
+ *       - adminCookieAuth: []
+ *       - devCookieAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
 router.get('/profile', authenticateCookie, async (req, res) => {
     try {
         const user = await pool.query(
@@ -285,17 +470,57 @@ router.get('/profile', authenticateCookie, async (req, res) => {
         );
         
         if (user.rows.length === 0) {
-            return res.status(401).json({ error: 'User not found' });
+            return res.status(404).json({ error: 'User not found' });
         }
         
         res.json({ user: user.rows[0] });
         
     } catch (error) {
+        console.error('Profile error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// ============ CHANGE PASSWORD (COOKIE-BASED) ============
+// ============ CHANGE PASSWORD ============
+/**
+ * @swagger
+ * /auth/change-password:
+ *   post:
+ *     summary: Change user password
+ *     description: |
+ *       Change the password for the authenticated user.
+ *       Requires current password and new password (min 8 characters).
+ *     tags:
+ *       - Profile
+ *     security:
+ *       - adminCookieAuth: []
+ *       - devCookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - current_password
+ *               - new_password
+ *             properties:
+ *               current_password:
+ *                 type: string
+ *                 format: password
+ *                 example: OldPass123!
+ *               new_password:
+ *                 type: string
+ *                 format: password
+ *                 example: NewPass123!
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Current password incorrect
+ */
 router.post('/change-password', authenticateCookie, async (req, res) => {
     const { current_password, new_password } = req.body;
     
